@@ -1,6 +1,13 @@
 spring:
   application:
     name: william278-backend
+
+  # Stop the serving of static resources
+  web:
+    resources:
+      add-mappings: false
+
+  # Configure Discord OAuth2
   security:
     oauth2:
       client:
@@ -20,6 +27,19 @@ spring:
             token-uri: https://discord.com/api/oauth2/token
             user-info-uri: https://discord.com/api/users/@me
             user-name-attribute: username
+
+# Provide OpenAPI docs
+springdoc:
+  show-actuator: false
+  api-docs:
+    path: "/openapi"
+  swagger-ui:
+    disable-swagger-default-url: true
+    show-common-extensions: true
+    operations-sorter: "alpha"
+    path: "/docs/"
+
+# Hides the Whitelabel error page
 server:
   error:
     whitelabel:

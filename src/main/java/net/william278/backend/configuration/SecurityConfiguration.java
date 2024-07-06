@@ -1,4 +1,4 @@
-package net.william278.backend.security;
+package net.william278.backend.configuration;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
