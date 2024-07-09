@@ -1,6 +1,7 @@
 package net.william278.backend.database.repository;
 
 import net.william278.backend.database.model.Channel;
+import net.william278.backend.database.model.Distribution;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.Version;
 import org.jetbrains.annotations.NotNull;
@@ -18,10 +19,25 @@ public interface VersionRepository extends CrudRepository<Version, String> {
     List<Version> getAllByProject(@NotNull Project project);
 
     @NotNull
+    List<Version> getAllByProjectAndDistribution(@NotNull Project project, @NotNull Distribution distribution);
+
+    @NotNull
     List<Version> getAllByProjectAndChannel(@NotNull Project project, @NotNull Channel channel);
+
+    @NotNull
+    List<Version> getAllByProjectAndDistributionAndChannel(@NotNull Project project, @NotNull Distribution distribution,
+                                                           @NotNull Channel channel);
 
     @NotNull
     Optional<Version> getTopByProjectAndChannelOrderByTimestamp(@NotNull Project project, @NotNull Channel channel);
 
+    @NotNull
+    Optional<Version> getTopByProjectAndDistributionAndChannelOrderByTimestamp(@NotNull Project project,
+                                                                               @NotNull Distribution distribution,
+                                                                               @NotNull Channel channel);
+
+    @NotNull
+    Optional<Version> findByProjectAndChannelAndDistributionAndName(@NotNull Project project, @NotNull Channel channel,
+                                                                   @NotNull Distribution distribution, @NotNull String name);
 
 }

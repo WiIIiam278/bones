@@ -12,19 +12,26 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "projects")
-public class Project {
+@Table(name = "distributions")
+public class Distribution {
 
-    public static final String PATTERN = "[a-zA-Z0-9._-]+";
+    public static final String PATTERN = "[a-z0-9._-]+";
 
     @Id
-    private String id;
+    private Integer id;
+    @ManyToOne
+    private Project project;
     @Schema(
             name = "name",
             pattern = PATTERN,
-            example = "HuskHomes"
+            example = "fabric-1.20.1"
     )
     private String name;
-    private boolean restricted;
+    @Schema(
+            name = "description",
+            example = "Fabric 1.20.1"
+    )
+    private String description;
+    private Boolean archived;
 
 }

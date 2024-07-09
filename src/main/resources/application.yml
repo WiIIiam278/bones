@@ -7,6 +7,17 @@ spring:
     resources:
       add-mappings: false
 
+  # Configure the database
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+  datasource:
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DATABASE}
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
   # Configure Discord OAuth2
   security:
     oauth2:
@@ -19,7 +30,7 @@ spring:
             authorization-grant-type: authorization_code
             scope:
               - identify
-            redirect-uri: '{baseUrl}/login/oauth2/code/discord'
+            redirect-uri: '{baseUrl}/login'
             clientName: 'William278.net backend'
         provider:
           discord:
