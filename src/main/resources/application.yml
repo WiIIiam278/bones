@@ -18,6 +18,7 @@ spring:
     password: ${MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
+
   # Configure Discord OAuth2
   security:
     oauth2:
@@ -42,11 +43,11 @@ spring:
 
 # App config
 app:
-  api-base-url: http://localhost:8080
-  api-title: William278.net API
-  storage-path: downloads/
-  api-version: 1
-  frontend-base-url: http://localhost:3000
+  api-base-url: ${API_BASE_URL}
+  api-title: ${API_TITLE}
+  storage-path: ${STORAGE_PATH}
+  api-version: ${API_VERSION}
+  frontend-base-url: ${FRONTEND_BASE_URL}
 
 # Provide OpenAPI docs
 springdoc:
