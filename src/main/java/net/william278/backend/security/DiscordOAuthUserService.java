@@ -45,7 +45,7 @@ public class DiscordOAuthUserService extends DefaultOAuth2UserService {
     private User updateUser(User user, OAuth2User oAuth2User) {
         user.setName(oAuth2User.getAttribute("username"));
         user.setAvatar(oAuth2User.getAttribute("avatar"));
-        // todo update projects
+        user.setEmail(oAuth2User.getAttribute("email"));
         return user;
     }
 
@@ -56,6 +56,7 @@ public class DiscordOAuthUserService extends DefaultOAuth2UserService {
         return User.builder()
                 .id(oAuth2User.getAttribute("id"))
                 .name(username)
+                .email(oAuth2User.getAttribute("email"))
                 .avatar(oAuth2User.getAttribute("avatar"))
                 .admin(false)
                 .projects(new ArrayList<>())

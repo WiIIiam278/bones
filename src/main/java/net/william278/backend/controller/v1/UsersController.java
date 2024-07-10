@@ -15,15 +15,14 @@ import org.springframework.web.bind.annotation.*;
 
 import static net.william278.backend.controller.RootController.CORS_FRONTEND_ORIGIN;
 
-@Schema(name = "Users")
 @RestController
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-public class UserController {
+public class UsersController {
 
     private final UsersRepository users;
 
     @Autowired
-    public UserController(UsersRepository users) {
+    public UsersController(UsersRepository users) {
         this.users = users;
     }
 

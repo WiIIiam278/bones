@@ -43,6 +43,12 @@ public class User implements OAuth2User {
     )
     private String name;
 
+    @Schema(
+            name = "email",
+            description = "The user's email address."
+    )
+    private String email;
+
     @JsonIgnore
     @Nullable
     private String avatar;
@@ -71,7 +77,7 @@ public class User implements OAuth2User {
             description = "List of project IDs the user has access to downloads for"
     )
     public List<String> getProjects() {
-        return projects.stream().map(Project::getId).toList();
+        return projects.stream().map(Project::getSlug).toList();
     }
 
     @JsonSerialize
@@ -96,6 +102,7 @@ public class User implements OAuth2User {
         return Map.of(
                 "id", id,
                 "username", name,
+                "email", email,
                 "avatar", getAvatar(),
                 "projects", projects,
                 "admin", admin

@@ -10,7 +10,12 @@ import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 
 import java.time.Instant;
+import java.util.List;
 
+@Schema(
+        name = "Version",
+        description = "A version of a project on a channel, for a distribution target platform."
+)
 @Data
 @Entity
 @Builder
@@ -24,6 +29,7 @@ public class Version {
     @Id
     @JsonIgnore
     private Integer id;
+
     @Schema(
             name = "version",
             description = "Name/tag of the version.",
@@ -50,10 +56,10 @@ public class Version {
 
     @Schema(
             name = "distribution",
-            description = "The distribution this version is associated with."
+            description = "The distributions this project has"
     )
-    @ManyToOne
-    private Distribution distribution;
+    @ManyToMany
+    private List<Distribution> distributions;
 
     @Schema(
             name = "channel",
@@ -82,6 +88,10 @@ public class Version {
 
     public boolean canDownload(@NotNull User user) {
         return !isRestricted() || user.hasProjectPermission(project);
+    }
+
+    public boolean hasDistribution(@NotNull Distribution distribution) {
+        return this.distributions.contains(distribution);
     }
 
 }

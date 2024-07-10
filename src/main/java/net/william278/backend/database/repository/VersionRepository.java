@@ -16,28 +16,21 @@ public interface VersionRepository extends CrudRepository<Version, String> {
     Optional<Version> findById(@NotNull Integer id);
 
     @NotNull
-    List<Version> getAllByProject(@NotNull Project project);
+    Optional<Version> findByProjectAndChannelAndName(@NotNull Project project, @NotNull Channel channel,
+                                                     @NotNull String version);
 
     @NotNull
-    List<Version> getAllByProjectAndDistribution(@NotNull Project project, @NotNull Distribution distribution);
+    List<Version> getAllByProject(@NotNull Project project);
 
     @NotNull
     List<Version> getAllByProjectAndChannel(@NotNull Project project, @NotNull Channel channel);
 
     @NotNull
-    List<Version> getAllByProjectAndDistributionAndChannel(@NotNull Project project, @NotNull Distribution distribution,
-                                                           @NotNull Channel channel);
+    List<Version> getAllByProjectAndChannelAndDistributionsIsContaining(@NotNull Project project,
+                                                                        @NotNull Channel channel,
+                                                                        @NotNull Distribution distribution);
 
     @NotNull
     Optional<Version> getTopByProjectAndChannelOrderByTimestamp(@NotNull Project project, @NotNull Channel channel);
-
-    @NotNull
-    Optional<Version> getTopByProjectAndDistributionAndChannelOrderByTimestamp(@NotNull Project project,
-                                                                               @NotNull Distribution distribution,
-                                                                               @NotNull Channel channel);
-
-    @NotNull
-    Optional<Version> findByProjectAndChannelAndDistributionAndName(@NotNull Project project, @NotNull Channel channel,
-                                                                   @NotNull Distribution distribution, @NotNull String name);
 
 }

@@ -29,7 +29,7 @@ import java.time.Duration;
 @Schema(name = "Downloads")
 @RestController
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-public class DownloadController {
+public class DownloadsController {
 
     private static final CacheControl CACHE = CacheControl.empty().cachePublic().sMaxAge(Duration.ofDays(7));
     private final AppConfiguration configuration;
@@ -39,8 +39,8 @@ public class DownloadController {
     private final DistributionRepository distributions;
 
     @Autowired
-    public DownloadController(AppConfiguration configuration, ProjectRepository projects, VersionRepository versions,
-                              ChannelRepository channels, DistributionRepository distributions) {
+    public DownloadsController(AppConfiguration configuration, ProjectRepository projects, VersionRepository versions,
+                               ChannelRepository channels, DistributionRepository distributions) {
         this.configuration = configuration;
         this.projects = projects;
         this.versions = versions;
@@ -71,8 +71,8 @@ public class DownloadController {
     @GetMapping(
             value = "/v1/projects/{project:" + Project.PATTERN
                     + "}/channels/{channel:" + Channel.PATTERN
-                    + "}/distributions/{distribution:" + Distribution.PATTERN
-                    + "}/versions/{version:" + Version.PATTERN + "}/download",
+                    + "}/versions/{version:" + Version.PATTERN
+                    + "}/distributions/{distribution:" + Distribution.PATTERN + "}",
             produces = {
                     MediaType.APPLICATION_JSON_VALUE,
                     MediaType.ALL_VALUE
@@ -101,10 +101,15 @@ public class DownloadController {
     ) {
         final Project project = this.projects.findById(projectName).orElseThrow(ProjectNotFound::new);
         final Channel channel = this.channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
+        final Version version = this.versions.findByProjectAndChannelAndName(project, channel, versionName)
+                .orElseThrow(VersionNotFound::new);
         final Distribution distribution = this.distributions.findDistributionByName(distributionName)
                 .orElseThrow(DistributionNotFound::new);
-        final Version version = this.versions.findByProjectAndChannelAndDistributionAndName(project, channel,
-                distribution, versionName).orElseThrow(VersionNotFound::new);
+
+        // Check the version has this distribution
+        if (!version.hasDistribution(distribution)) {
+            throw new DistributionNotFound();
+        }
 
         // Restrict download if the version is restricted and the user is not authenticated
         if (version.isRestricted() && !version.canDownload(principal)) {
@@ -114,9 +119,9 @@ public class DownloadController {
         try {
             return new JavaArchive(
                     this.configuration.getStoragePath()
-                            .resolve(project.getName())
+                            .resolve(project.getSlug())
                             .resolve(channel.getName())
-                            .resolve(version.getDistribution().getName())
+                            .resolve(distribution.getName())
                             .resolve(version.getFileName()),
                     CACHE
             );
