@@ -18,6 +18,7 @@ import java.nio.file.Path;
 public class AppConfiguration {
 
     private URL apiBaseUrl;
+    private URL frontendBaseUrl;
     private String apiTitle;
     private String apiVersion;
     private @NotNull Path storagePath;

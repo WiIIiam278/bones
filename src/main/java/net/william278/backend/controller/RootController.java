@@ -18,4 +18,11 @@ public class RootController {
                 .build();
     }
 
+    @GetMapping({"/login"})
+    public ResponseEntity<?> redirectToLogin() {
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create("oauth2/authorization/discord"))
+                .build();
+    }
+
 }

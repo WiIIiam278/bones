@@ -7,10 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.constraints.Pattern;
 import net.william278.backend.configuration.AppConfiguration;
-import net.william278.backend.database.model.Channel;
-import net.william278.backend.database.model.Distribution;
-import net.william278.backend.database.model.Project;
-import net.william278.backend.database.model.Version;
+import net.william278.backend.database.model.*;
 import net.william278.backend.database.repository.ChannelRepository;
 import net.william278.backend.database.repository.DistributionRepository;
 import net.william278.backend.database.repository.ProjectRepository;
@@ -21,10 +18,8 @@ import net.william278.backend.util.MediaTypeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.*;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -84,7 +79,9 @@ public class DownloadController {
             }
     )
     @Operation(summary = "Downloads a specific project version on a certain channel.")
+    @CrossOrigin
     public ResponseEntity<?> download(
+            @AuthenticationPrincipal User principal,
             @Parameter(name = "project", description = "The project identifier.", example = "HuskHomes")
             @PathVariable("project")
             @Pattern(regexp = Project.PATTERN) //
@@ -108,6 +105,11 @@ public class DownloadController {
                 .orElseThrow(DistributionNotFound::new);
         final Version version = this.versions.findByProjectAndChannelAndDistributionAndName(project, channel,
                 distribution, versionName).orElseThrow(VersionNotFound::new);
+
+        // Restrict download if the version is restricted and the user is not authenticated
+        if (version.isRestricted() && !version.canDownload(principal)) {
+            throw new DownloadRestricted();
+        }
 
         try {
             return new JavaArchive(

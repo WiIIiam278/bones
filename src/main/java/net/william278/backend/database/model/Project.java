@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 
 @Data
 @Entity
@@ -25,6 +26,8 @@ public class Project {
             example = "HuskHomes"
     )
     private String name;
-    private boolean restricted;
+    private Boolean restricted;
+    @Nullable
+    private Integer associatedRoleId;
 
 }

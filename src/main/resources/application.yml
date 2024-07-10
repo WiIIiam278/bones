@@ -24,20 +24,29 @@ spring:
       client:
         registration:
           discord:
+            provider: discord
             client-id: ${DISCORD_CLIENT_ID}
             client-secret: ${DISCORD_CLIENT_SECRET}
-            client-authentication-method: post
-            authorization-grant-type: authorization_code
+            client-authentication-method: 'client_secret_post'
+            authorization-grant-type: 'authorization_code'
             scope:
               - identify
-            redirect-uri: '{baseUrl}/login'
+            redirect-uri: '{baseUrl}/login/oauth2/code/discord'
             clientName: 'William278.net backend'
         provider:
           discord:
-            authorization-uri: https://discord.com/api/oauth2/authorize
+            authorization-uri: https://discord.com/oauth2/authorize
             token-uri: https://discord.com/api/oauth2/token
             user-info-uri: https://discord.com/api/users/@me
             user-name-attribute: username
+
+# App config
+app:
+  api-base-url: http://localhost:8080
+  api-title: William278.net API
+  storage-path: downloads/
+  api-version: 1
+  frontend-base-url: http://localhost:3000
 
 # Provide OpenAPI docs
 springdoc:
@@ -55,3 +64,10 @@ server:
   error:
     whitelabel:
       enabled: false
+
+# Debug
+logging:
+  level:
+    org:
+      springframework:
+        security: DEBUG

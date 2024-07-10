@@ -7,12 +7,12 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;
 
-public interface UsersRepository extends CrudRepository<User, Integer> {
+public interface UsersRepository extends CrudRepository<User, String> {
 
     @NotNull
-    Optional<User> findById(@NotNull Integer id);
+    Optional<User> findById(@NotNull String id);
 
     @Override
-    void deleteById(@NotNull Integer integer);
+    void deleteById(@NotNull String integer);
 
 }

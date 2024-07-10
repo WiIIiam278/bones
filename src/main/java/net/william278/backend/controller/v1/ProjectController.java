@@ -8,10 +8,7 @@ import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.exception.ProjectNotFound;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @Schema(name = "Projects")
 @RestController
@@ -34,6 +31,7 @@ public class ProjectController {
             value = "/v1/projects",
             produces = { MediaType.APPLICATION_JSON_VALUE }
     )
+    @CrossOrigin
     public Iterable<Project> getProjects() {
         return projects.findAll();
     }
@@ -45,6 +43,7 @@ public class ProjectController {
             value = "/v1/projects/{projectId}",
             produces = { MediaType.APPLICATION_JSON_VALUE }
     )
+    @CrossOrigin
     public Project getProject(@PathVariable String projectId) {
         return projects.findById(projectId).orElseThrow(ProjectNotFound::new);
     }
