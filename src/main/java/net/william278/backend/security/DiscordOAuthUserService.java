@@ -3,6 +3,7 @@ package net.william278.backend.security;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.UsersRepository;
 import org.jetbrains.annotations.NotNull;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 @RequiredArgsConstructor
 public class DiscordOAuthUserService extends DefaultOAuth2UserService {
 
+    private final AppConfiguration config;
     private final UsersRepository users;
 
     @Override
@@ -51,14 +53,21 @@ public class DiscordOAuthUserService extends DefaultOAuth2UserService {
 
     @NotNull
     private User createUser(@NotNull OAuth2User oAuth2User) {
+        final String id = oAuth2User.getAttribute("id");
         final String username = oAuth2User.getAttribute("username");
-        log.info("Creating new user for {}", username);
+
+        // Determine whether to make admin account
+        final String adminId = config.getDefaultAdminDiscordId();
+        final boolean isAdmin = adminId != null && adminId.equals(id);
+        log.info("Creating new {} for {}", isAdmin ? "admin account" : "user account",  username);
+
+        // Create the user object
         return User.builder()
-                .id(oAuth2User.getAttribute("id"))
+                .id(id)
                 .name(username)
                 .email(oAuth2User.getAttribute("email"))
                 .avatar(oAuth2User.getAttribute("avatar"))
-                .admin(false)
+                .admin(isAdmin)
                 .projects(new ArrayList<>())
                 .build();
     }

@@ -37,51 +37,32 @@ public class UsersController {
         this.projects = projects;
     }
 
-    @Operation(summary = "Paginate through all users.", security = {
-            @SecurityRequirement(name = "OAuth2")
-    })
+    @Operation(
+            summary = "Paginate and search through the list of all users.",
+            security = {@SecurityRequirement(name = "OAuth2")}
+    )
     @GetMapping(
             value = "/v1/users",
-            produces = {MediaType.APPLICATION_JSON_VALUE},
-            params = {"page", "size"}
+            produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @CrossOrigin(
             allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
             methods = {RequestMethod.GET}
     )
     public Page<User> findPaginated(@AuthenticationPrincipal User principal,
-                                    @RequestParam("page") int page, @RequestParam("size") int size) {
+                                    @RequestParam(value = "page", defaultValue = "0") int page,
+                                    @RequestParam(value = "size", defaultValue = "15") int size,
+                                    @RequestParam(value = "nameSearch", defaultValue = "") String nameSearch) {
         if (principal == null) {
             throw new NotAuthenticated();
         }
         if (!principal.isAdmin()) {
             throw new NoPermission();
+        }
+        if (nameSearch != null && !nameSearch.isBlank()) {
+            return users.findAllByNameContainingIgnoreCase(nameSearch, PageRequest.of(page, size));
         }
         return users.findAll(PageRequest.of(page, size));
-    }
-
-    @Operation(summary = "Paginate through all users.", security = {
-            @SecurityRequirement(name = "OAuth2")
-    })
-    @GetMapping(
-            value = "/v1/users/search",
-            produces = {MediaType.APPLICATION_JSON_VALUE},
-            params = {"page", "size", "search"}
-    )
-    @CrossOrigin(
-            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
-            methods = {RequestMethod.GET}
-    )
-    public Page<User> searchPaginated(@AuthenticationPrincipal User principal,
-                                      @RequestParam("page") int page, @RequestParam("size") int size,
-                                      @RequestParam("search") String search) {
-        if (principal == null) {
-            throw new NotAuthenticated();
-        }
-        if (!principal.isAdmin()) {
-            throw new NoPermission();
-        }
-        return users.findAllByNameContainingIgnoreCase(search, PageRequest.of(page, size));
     }
 
     @Operation(summary = "Get a specific user by their ID.", security = {
@@ -140,14 +121,14 @@ public class UsersController {
         if (user.isAdmin()) {
             throw new NoPermission();
         }
-        users.delete(user);
+        users.deleteById(userId);
         return user;
     }
 
     @Operation(
             summary = "Set the projects a user is assigned to.",
             security = {@SecurityRequirement(name = "OAuth2")
-    })
+            })
     @ApiResponse(
             responseCode = "200",
             description = "The user with their updated projects.",

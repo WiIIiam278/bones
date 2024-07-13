@@ -4,11 +4,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.*;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Table;
 import lombok.*;
 import org.hibernate.validator.constraints.Length;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 @Schema(
@@ -21,7 +26,7 @@ import java.util.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "projects")
-public class Project {
+public class Project implements Comparable<Project> {
 
     public static final String PATTERN = "[a-z0-9._-]+";
 
@@ -61,6 +66,11 @@ public class Project {
     @SneakyThrows
     public void setMetadata(@NotNull Metadata metadata) {
         this.metadata = new ObjectMapper().writeValueAsString(metadata);
+    }
+
+    @Override
+    public int compareTo(@NotNull Project o) {
+        return Integer.compare(getMetadata().getSortWeight(), o.getMetadata().getSortWeight());
     }
 
     @Schema(
@@ -106,30 +116,37 @@ public class Project {
         private Set<String> tags;
 
         @Schema(
-                name = "repository",
+                name = "github",
                 description = "The project's GitHub repository URL.",
                 example = "https://github.com/WiIIiam278/HuskHomes"
         )
         @Builder.Default
         @Length(max = 256)
-        private String repository = null;
+        private String github = null;
 
         @Schema(
-                name = "readmePath",
-                description = "Path to a README page for the project. If not set, will be pulled from the repo.",
-                example = "/about-huskhomes"
+                name = "pullReadmeFromGithub",
+                description = "Whether to pull the README from the GitHub repository.",
+                example = "true"
         )
         @Builder.Default
-        @Length(max = 256)
-        private String readmePath = null;
+        private boolean pullReadmeFromGithub = true;
+
+        @Schema(
+                name = "readmeBody",
+                description = "README body text. Note that if pullReadmeFromGithub is true, this will be ignored.",
+                example = "HuskHomes is a lightweight, fast and feature-rich homes plugin. (...)"
+        )
+        @Builder.Default
+        private String readmeBody = null;
 
         @Schema(
                 name = "links",
                 description = "A map of links associated with the project.",
-                example = "{\"spigot\": \"https://www.spigotmc.org/resources/huskhomes.83767/\"}"
+                example = "[{\"id\": \"spigot\", \"url\": \"https://www.spigotmc.org/resources/huskhomes.83767/\"}]"
         )
         @Builder.Default
-        private Map<String, String> links = new TreeMap<>();
+        private List<Link> links = new ArrayList<>();
 
         @Schema(
                 name = "maintainers",
@@ -138,6 +155,15 @@ public class Project {
         )
         @Builder.Default
         private Set<String> maintainers = new HashSet<>(Set.of("William278"));
+
+        @Schema(
+                name = "suggestedRetailPrice",
+                description = "The suggested retail price of the project.",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED
+        )
+        @Nullable
+        @Builder.Default
+        private BigDecimal suggestedRetailPrice = null;
 
         @Schema(
                 name = "archived",
@@ -156,12 +182,29 @@ public class Project {
         private boolean documentation = false;
 
         @Schema(
+                name = "listDownloads",
+                description = "Whether the project has a downloads page.",
+                example = "true"
+        )
+        @Builder.Default
+        private boolean listDownloads = false;
+
+        @Schema(
                 name = "hidden",
                 description = "Whether the project should be hidden.",
                 example = "false"
         )
         @Builder.Default
         private boolean hidden = false;
+
+        @Schema(
+                name = "sortWeight",
+                description = "The weight of the project in sorting.",
+                example = "1",
+                requiredMode = Schema.RequiredMode.NOT_REQUIRED
+        )
+        @Builder.Default
+        private int sortWeight = 1;
 
         @Schema(
                 name = "icons",
@@ -172,12 +215,12 @@ public class Project {
         private Map<IconType, String> icons = new TreeMap<>();
 
         @Schema(
-                name = "specialProperties",
+                name = "properties",
                 description = "A map of other metadata properties associated with the project.",
-                example = "{\"special-property\": \"special-value\"}"
+                example = "[{property: \"special-property\", value: \"special-value\"}]"
         )
         @Builder.Default
-        private Map<String, String> specialProperties = new TreeMap<>();
+        private List<Property> properties = new ArrayList<>();
 
         @Schema(
                 name = "images",
@@ -185,6 +228,10 @@ public class Project {
         )
         @Builder.Default
         private List<Image> images = new ArrayList<>();
+
+        public Optional<String> getLinkUrlById(@NotNull String id) {
+            return links.stream().filter(link -> link.id().equals(id)).findFirst().map(Link::url);
+        }
 
         @Schema(
                 name = "IconType",
@@ -217,7 +264,42 @@ public class Project {
                 )
                 @Length(max = 32768)
                 @NotNull String description) {
+        }
 
+        record Link(
+                @Schema(
+                        name = "id",
+                        description = "The id of the link.",
+                        example = "spigot"
+                )
+                @Length(max = 64)
+                @NotNull String id,
+
+                @Schema(
+                        name = "url",
+                        description = "The URL of the link.",
+                        example = "https://www.spigotmc.org/resources/huskhomes.83767/"
+                )
+                @Length(max = 255)
+                @NotNull String url) {
+        }
+
+        record Property(
+                @Schema(
+                        name = "key",
+                        description = "The key of the property.",
+                        example = "special-property"
+                )
+                @Length(max = 64)
+                @NotNull String key,
+
+                @Schema(
+                        name = "value",
+                        description = "The value of the property.",
+                        example = "special-value"
+                )
+                @Length(max = 255)
+                @NotNull String value) {
         }
     }
 

@@ -17,11 +17,18 @@ import java.nio.file.Path;
 @Validated
 public class AppConfiguration {
 
+    private String defaultAdminDiscordId;
+
     private URL apiBaseUrl;
     private URL frontendBaseUrl;
+
     private String apiTitle;
     private String apiVersion;
     private String apiSecret;
+
     private @NotNull Path storagePath;
+
+    private String modrinthApiToken;
+    private String githubApiToken;
 
 }

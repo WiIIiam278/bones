@@ -8,7 +8,6 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import net.william278.backend.configuration.AppConfiguration;
-import net.william278.backend.exception.DistributionNotFound;
 import net.william278.backend.exception.DownloadNotFound;
 import org.jetbrains.annotations.NotNull;
 

@@ -107,7 +107,7 @@ public class ProjectsController {
             throw new NoPermission();
         }
         final Project project = projects.findById(projectId).orElseThrow(ProjectNotFound::new);
-        projects.delete(project);
+        projects.deleteById(projectId);
         return project;
     }
 

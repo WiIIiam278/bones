@@ -50,6 +50,9 @@ app:
   api-version: ${API_VERSION}
   frontend-base-url: ${FRONTEND_BASE_URL}
   api-secret: ${API_SECRET}
+  default-admin-discord-id: ${DEFAULT_ADMIN_DISCORD_ID}
+  modrinth-api-token: ${MODRINTH_API_KEY}
+  github-api-token: ${GITHUB_API_KEY}
 
 # Provide OpenAPI docs
 springdoc:
