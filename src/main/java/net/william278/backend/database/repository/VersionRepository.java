@@ -10,7 +10,7 @@ import org.springframework.data.repository.CrudRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface VersionRepository extends CrudRepository<Version, String> {
+public interface VersionRepository extends CrudRepository<Version, Integer> {
 
     @NotNull
     Optional<Version> findById(@NotNull Integer id);
@@ -26,9 +26,13 @@ public interface VersionRepository extends CrudRepository<Version, String> {
     List<Version> getAllByProjectAndChannel(@NotNull Project project, @NotNull Channel channel);
 
     @NotNull
-    List<Version> getAllByProjectAndChannelAndDistributionsIsContaining(@NotNull Project project,
-                                                                        @NotNull Channel channel,
-                                                                        @NotNull Distribution distribution);
+    default List<Version> getAllByProjectAndChannelAndDistributionsIsContaining(@NotNull Project project,
+                                                                                @NotNull Channel channel,
+                                                                                @NotNull Distribution distribution) {
+        return getAllByProjectAndChannel(project, channel).stream()
+                .filter(version -> version.getDistributions().contains(distribution))
+                .toList();
+    }
 
     @NotNull
     Optional<Version> getTopByProjectAndChannelOrderByTimestamp(@NotNull Project project, @NotNull Channel channel);

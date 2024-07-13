@@ -48,7 +48,7 @@ public class DistributionsController {
     )
     @CrossOrigin
     @Operation(summary = "Get the distributions a project has published versions for.")
-    public Iterable<Distribution> getProjectDistributions(@PathVariable String project) {
+    public List<Distribution> getProjectDistributions(@PathVariable String project) {
         final Project found = projects.findById(project).orElseThrow(ProjectNotFound::new);
         return distributions.findDistributionsByProject(found);
     }
@@ -62,13 +62,13 @@ public class DistributionsController {
     )
     @CrossOrigin
     @Operation(summary = "Get the distributions a project has published versions for on a specific release channel.")
-    public Iterable<Distribution> getProjectDistributionsByChannel(@PathVariable String project, @PathVariable String channel) {
+    public List<Distribution> getProjectDistributionsByChannel(@PathVariable String project, @PathVariable String channel) {
         final Project foundProject = projects.findById(project).orElseThrow(ProjectNotFound::new);
         final Channel foundChannel = channels.findChannelByName(channel).orElseThrow(ChannelNotFound::new);
         return versions.getAllByProjectAndChannel(foundProject, foundChannel).stream()
                 .map(Version::getDistributions)
                 .flatMap(List::stream)
-                .collect(Collectors.toSet());
+                .toList();
     }
 
 }

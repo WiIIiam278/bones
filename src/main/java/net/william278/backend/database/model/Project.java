@@ -4,12 +4,10 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.validator.constraints.Length;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -34,24 +32,19 @@ public class Project {
             description = "The project's unique slug ID."
     )
     @Id
+    @Length(min = 1, max = 64)
     private String slug;
 
     @Schema(
             name = "restricted",
             description = "Whether the project is restricted to certain users."
     )
-    private Boolean restricted;
-
-    @Schema(
-            name = "associatedRoleId",
-            description = "The Discord role ID associated with the project."
-    )
-    @Nullable
-    private Integer associatedRoleId;
+    private boolean restricted;
 
     @JsonIgnore
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
+    @Column(length = Integer.MAX_VALUE)
     private String metadata;
 
     @Schema(
@@ -84,13 +77,17 @@ public class Project {
                 description = "The project's name.",
                 example = "HuskHomes"
         )
+        @Length(min = 1, max = 255)
         private String name;
 
         @Schema(
-                name = "description",
+                name = "tagline",
                 description = "A brief description of the project.",
-                example = "A lightweight, fast and feature-rich homes plugin."
+                example = "A lightweight, fast and feature-rich homes plugin.",
+                maxLength = 32768
         )
+        @Length(min = 1, max = 32768)
+        @Column(length = 32768)
         private String tagline;
 
         @Schema(
@@ -98,6 +95,7 @@ public class Project {
                 description = "The project's license.",
                 example = "MIT"
         )
+        @Length(min = 1, max = 64)
         private String license;
 
         @Schema(
@@ -113,6 +111,7 @@ public class Project {
                 example = "https://github.com/WiIIiam278/HuskHomes"
         )
         @Builder.Default
+        @Length(max = 256)
         private String repository = null;
 
         @Schema(
@@ -121,6 +120,7 @@ public class Project {
                 example = "/about-huskhomes"
         )
         @Builder.Default
+        @Length(max = 256)
         private String readmePath = null;
 
         @Schema(
@@ -148,12 +148,12 @@ public class Project {
         private boolean archived = false;
 
         @Schema(
-                name = "githubWiki",
+                name = "documentation",
                 description = "Whether the project has a GitHub Wiki to pull documentation from.",
                 example = "true"
         )
         @Builder.Default
-        private boolean githubWiki = false;
+        private boolean documentation = false;
 
         @Schema(
                 name = "hidden",
@@ -172,6 +172,14 @@ public class Project {
         private Map<IconType, String> icons = new TreeMap<>();
 
         @Schema(
+                name = "specialProperties",
+                description = "A map of other metadata properties associated with the project.",
+                example = "{\"special-property\": \"special-value\"}"
+        )
+        @Builder.Default
+        private Map<String, String> specialProperties = new TreeMap<>();
+
+        @Schema(
                 name = "images",
                 description = "A list of images associated with the project."
         )
@@ -185,7 +193,7 @@ public class Project {
         enum IconType {
             @Schema(description = "A scalable vector graphic icon.")
             SVG,
-            @Schema(description = "A PNG icon.")
+            @Schema(description = "A bitmap PNG icon.")
             PNG,
         }
 
@@ -196,14 +204,18 @@ public class Project {
         record Image(
                 @Schema(
                         name = "url",
-                        description = "The URL of the image."
+                        description = "The URL of the image.",
+                        example = "https://example.com/image.png"
                 )
+                @Length(max = 511)
                 @NotNull String url,
 
                 @Schema(
                         name = "description",
-                        description = "A brief alt text description of the image."
+                        description = "A brief alt text description of the image.",
+                        example = "A screenshot of the project in action."
                 )
+                @Length(max = 32768)
                 @NotNull String description) {
 
         }

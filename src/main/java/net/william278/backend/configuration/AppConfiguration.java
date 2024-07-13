@@ -21,6 +21,7 @@ public class AppConfiguration {
     private URL frontendBaseUrl;
     private String apiTitle;
     private String apiVersion;
+    private String apiSecret;
     private @NotNull Path storagePath;
 
 }

@@ -68,6 +68,10 @@ public class DownloadsController {
                     )
             }
     )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The version is restricted and the user is not authenticated."
+    )
     @GetMapping(
             value = "/v1/projects/{project:" + Project.PATTERN
                     + "}/channels/{channel:" + Channel.PATTERN
@@ -117,20 +121,14 @@ public class DownloadsController {
         }
 
         try {
-            return new JavaArchive(
-                    this.configuration.getStoragePath()
-                            .resolve(project.getSlug())
-                            .resolve(channel.getName())
-                            .resolve(distribution.getName())
-                            .resolve(version.getFileName()),
-                    CACHE
-            );
+            return new JavaArchive(version.getDownloadPathFor(distribution, this.configuration), CACHE);
         } catch (Throwable e) {
             throw new DownloadFailed();
         }
     }
 
     private static class JavaArchive extends ResponseEntity<FileSystemResource> {
+
         JavaArchive(final Path path, final CacheControl cache) throws IOException {
             super(new FileSystemResource(path), headersFor(path, cache), HttpStatus.OK);
         }

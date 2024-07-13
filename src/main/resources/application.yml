@@ -49,6 +49,7 @@ app:
   storage-path: ${STORAGE_PATH}
   api-version: ${API_VERSION}
   frontend-base-url: ${FRONTEND_BASE_URL}
+  api-secret: ${API_SECRET}
 
 # Provide OpenAPI docs
 springdoc:

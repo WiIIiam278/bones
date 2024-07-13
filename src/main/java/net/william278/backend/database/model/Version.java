@@ -7,10 +7,15 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import net.william278.backend.configuration.AppConfiguration;
+import net.william278.backend.exception.DistributionNotFound;
+import net.william278.backend.exception.DownloadNotFound;
 import org.jetbrains.annotations.NotNull;
 
+import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
+import java.util.Optional;
 
 @Schema(
         name = "Version",
@@ -25,10 +30,19 @@ import java.util.List;
 public class Version {
 
     public static final String PATTERN = "[a-zA-Z0-9\\\\+._-]+";
+    public static final String DEFAULT_CHANGELOG = "No changelog provided.";
 
     @Id
     @JsonIgnore
     private Integer id;
+
+    @ManyToOne
+    @JsonIgnore
+    private Project project;
+
+    @ManyToOne
+    @JsonIgnore
+    private Channel channel;
 
     @Schema(
             name = "version",
@@ -37,61 +51,69 @@ public class Version {
             example = "4.7"
     )
     private String name;
+
     @Schema(
             name = "changelog",
             description = "Changelog for the version."
     )
-    private String changelog;
+    @Builder.Default
+    private String changelog = DEFAULT_CHANGELOG;
+
     @Schema(
             name = "timestamp",
-            description = "Timestamp of the version's release."
+            description = "Timestamp of the version's release.",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
-    private Instant timestamp;
-    @Schema(
-            name = "project",
-            description = "The project this version is associated with."
-    )
-    @ManyToOne
-    private Project project;
+    @Builder.Default
+    private Instant timestamp = Instant.now();
 
     @Schema(
-            name = "distribution",
-            description = "The distributions this project has"
+            name = "downloads",
+            description = "The downloads associated with this version.",
+            minLength = 1
     )
-    @ManyToMany
-    private List<Distribution> distributions;
-
-    @Schema(
-            name = "channel",
-            description = "The channel this version is associated with."
-    )
-    @ManyToOne
-    private Channel channel;
-
-    @Schema(
-            name = "name",
-            pattern = PATTERN,
-            example = "HuskHomes-Paper-4.7.jar"
-    )
-    private String fileName;
-    @Schema(
-            name = "sha256",
-            pattern = "[a-f0-9]{64}",
-            example = "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
-    )
-    private String fileHash;
+    @OneToMany
+    private List<Download> downloads;
 
     @JsonIgnore
     public boolean isRestricted() {
-        return project.getRestricted();
+        return project.isRestricted();
     }
 
     public boolean canDownload(@NotNull User user) {
         return !isRestricted() || user.hasProjectPermission(project);
     }
 
+    @NotNull
+    @JsonIgnore
+    public List<Distribution> getDistributions() {
+        return downloads.stream().map(Download::getDistribution).toList();
+    }
+
     public boolean hasDistribution(@NotNull Distribution distribution) {
-        return this.distributions.contains(distribution);
+        return getDistributions().contains(distribution);
+    }
+
+    @NotNull
+    public Download getDownloadFor(@NotNull Distribution distribution) {
+        final Optional<Download> download = downloads.stream().filter(d -> d.getDistribution().equals(distribution)).findFirst();
+        return download.orElseThrow(DownloadNotFound::new);
+    }
+
+    @NotNull
+    public Download getDownloadByFileName(@NotNull String fileName) {
+        final Optional<Download> download = downloads.stream().filter(d -> d.getName().equals(fileName)).findFirst();
+        return download.orElseThrow(DownloadNotFound::new);
+    }
+
+    @NotNull
+    public Path getDownloadPathFor(@NotNull Distribution distribution, @NotNull AppConfiguration config) {
+        return config.getStoragePath()
+                .resolve(project.getSlug())
+                .resolve(channel.getName())
+                .resolve(name)
+                .resolve(distribution.getName())
+                .resolve(getDownloadFor(distribution).getName());
     }
 
 }

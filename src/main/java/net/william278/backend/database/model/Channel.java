@@ -25,9 +25,6 @@ public class Channel {
     public static final String PATTERN = "[a-z0-9._-]+";
 
     @Id
-    @JsonIgnore
-    private Integer id;
-
     @Schema(
             name = "name",
             pattern = PATTERN,

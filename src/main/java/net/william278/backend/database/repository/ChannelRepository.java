@@ -6,10 +6,7 @@ import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;
 
-public interface ChannelRepository extends CrudRepository<Channel, Integer> {
-
-    @NotNull
-    Optional<Channel> findById(@NotNull Integer id);
+public interface ChannelRepository extends CrudRepository<Channel, String> {
 
     @NotNull
     Optional<Channel> findChannelByName(@NotNull String name);

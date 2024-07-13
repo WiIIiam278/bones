@@ -23,15 +23,21 @@ class Advice {
         return this.error(HttpStatus.INTERNAL_SERVER_ERROR, "An internal error occurred while serving your download.");
     }
 
+    @ExceptionHandler(UploadFailed.class)
+    @ResponseBody
+    public ResponseEntity<?> uploadFailed(final UploadFailed exception) {
+        return this.error(HttpStatus.INTERNAL_SERVER_ERROR, "An internal error occurred while uploading a file.");
+    }
+
     @ExceptionHandler(ChannelNotFound.class)
     @ResponseBody
     public ResponseEntity<?> downloadNotFound(final ChannelNotFound exception) {
-        return this.error(HttpStatus.NOT_FOUND, "Release channel not found.");
+        return this.error(HttpStatus.NOT_FOUND, "Download not found.");
     }
 
     @ExceptionHandler(DistributionNotFound.class)
     @ResponseBody
-    public ResponseEntity<?> buildNotFound(final DistributionNotFound exception) {
+    public ResponseEntity<?> distributionNotFound(final DistributionNotFound exception) {
         return this.error(HttpStatus.NOT_FOUND, "Distribution not found.");
     }
 
@@ -53,16 +59,22 @@ class Advice {
         return this.error(HttpStatus.NOT_FOUND, "User not found.");
     }
 
-    @ExceptionHandler(NotAuthenticated.class)
-    @ResponseBody
-    public ResponseEntity<?> notAuthenticated(final NotAuthenticated exception) {
-        return this.error(HttpStatus.UNAUTHORIZED, "Not logged in.");
-    }
-
     @ExceptionHandler(NoHandlerFoundException.class)
     @ResponseBody
     public ResponseEntity<?> endpointNotFound(final NoHandlerFoundException exception) {
         return this.error(HttpStatus.NOT_FOUND, "Endpoint not found.");
+    }
+
+    @ExceptionHandler(NotAuthenticated.class)
+    @ResponseBody
+    public ResponseEntity<?> notAuthenticated(final NotAuthenticated exception) {
+        return this.error(HttpStatus.UNAUTHORIZED, "You must be logged in to perform this action.");
+    }
+
+    @ExceptionHandler(NoPermission.class)
+    @ResponseBody
+    public ResponseEntity<?> noPermission(final NoPermission exception) {
+        return this.error(HttpStatus.FORBIDDEN, "You do not have permission to perform this action.");
     }
 
     private ResponseEntity<?> error(final HttpStatus status, final String error) {

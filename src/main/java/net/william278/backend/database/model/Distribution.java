@@ -10,6 +10,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.Nullable;
 
 @Schema(
         name = "Distribution",
@@ -29,11 +30,8 @@ public class Distribution {
     @JsonIgnore
     private Integer id;
 
-    @Schema(
-            name = "project",
-            description = "The project that the distribution is associated with."
-    )
     @ManyToOne
+    @JsonIgnore
     private Project project;
 
     @Schema(
@@ -47,14 +45,24 @@ public class Distribution {
     @Schema(
             name = "description",
             description = "Text to specify the distribution target.",
-            example = "Fabric 1.20.1"
+            example = "Fabric 1.20.1",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
-    private String description;
+    @Nullable
+    @Builder.Default
+    private String description = null;
 
     @Schema(
             name = "archived",
-            description = "Whether the distribution is archived and no longer active."
+            description = "Whether the distribution is archived and no longer active.",
+            example = "false",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
-    private Boolean archived;
+    @Builder.Default
+    private Boolean archived = false;
+
+    public boolean isArchived() {
+        return archived != null && archived;
+    }
 
 }

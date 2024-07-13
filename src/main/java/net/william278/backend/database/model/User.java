@@ -5,10 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Unmodifiable;
@@ -58,6 +55,7 @@ public class User implements OAuth2User {
             name = "admin",
             description = "Whether the user is an administrator"
     )
+    @Getter(AccessLevel.NONE)
     private Boolean admin = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
@@ -93,6 +91,10 @@ public class User implements OAuth2User {
             return URI.create("%s/embed/avatars/%s.png".formatted(CDN_URL, defaultAvatarIndex));
         }
         return URI.create("%s/avatars/%s/%s.png".formatted(CDN_URL, id, avatar));
+    }
+
+    public boolean isAdmin() {
+        return admin != null && admin;
     }
 
     @JsonIgnore

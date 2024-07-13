@@ -13,6 +13,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @Schema(name = "Channels")
 @RestController
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -36,7 +38,7 @@ public class ChannelsController {
     )
     @CrossOrigin
     @Operation(summary = "Get the list of channels a project has released versions on.")
-    public Iterable<Channel> getChannelsForProject(@PathVariable String project) {
+    public List<Channel> getChannelsForProject(@PathVariable String project) {
         final Project found = projects.findById(project).orElseThrow(ProjectNotFound::new);
         return versions.getAllByProject(found).stream().map(Version::getChannel).toList();
     }
