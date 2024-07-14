@@ -139,6 +139,7 @@ public class VersionsController {
                 // Move file
                 file.transferTo(dest);
                 download.setMd5(DigestUtils.md5Digest(file.getInputStream()));
+                download.setFileSize(file.getSize());
             }
         } catch (IOException e) {
             throw new UploadFailed();

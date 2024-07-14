@@ -53,6 +53,13 @@ public class Download {
     )
     private String md5;
 
+    @Schema(
+            name = "fileSize",
+            description = "The size of the file in bytes.",
+            example = "1024"
+    )
+    private long fileSize;
+
     public void setMd5(byte[] md5) {
         this.md5 = new String(md5, StandardCharsets.UTF_8);
     }

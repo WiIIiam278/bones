@@ -43,6 +43,14 @@ public class Distribution {
     private String name;
 
     @Schema(
+            name = "group",
+            description = "The distribution group name.",
+            pattern = PATTERN,
+            example = "fabric"
+    )
+    private String group;
+
+    @Schema(
             name = "description",
             description = "Text to specify the distribution target.",
             example = "Fabric 1.20.1",
