@@ -15,4 +15,7 @@ public interface ProjectRepository extends CrudRepository<Project, String> {
     @NotNull
     List<Project> findAll();
 
+    @NotNull
+    List<Project> findAllByRestrictedTrue();
+
 }

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import net.william278.backend.controller.v1.StatsController;
 import net.william278.backend.database.model.Project;
+import net.william278.backend.util.HTTPUtils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -21,7 +22,7 @@ public class SpigotDataService implements StatsService {
 
     private static final String ENDPOINT_URL = "https://api.spiget.org/v2/resources/%s";
 
-    private final OkHttpClient client = createClient("spigot");
+    private final OkHttpClient client = HTTPUtils.createClient("spigot");
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Override

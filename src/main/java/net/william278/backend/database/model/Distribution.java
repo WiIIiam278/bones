@@ -2,10 +2,7 @@ package net.william278.backend.database.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -28,6 +25,7 @@ public class Distribution {
 
     @Id
     @JsonIgnore
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @ManyToOne
@@ -47,9 +45,8 @@ public class Distribution {
             description = "The distribution group name.",
             example = "fabric"
     )
-    @Nullable
     @Builder.Default
-    private String groupName = null;
+    private String groupName = "fabric";
 
     @Schema(
             name = "description",

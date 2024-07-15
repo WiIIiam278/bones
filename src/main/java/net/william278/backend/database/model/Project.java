@@ -54,7 +54,7 @@ public class Project implements Comparable<Project> {
             joinColumns = @JoinColumn(name = "project_slug"),
             inverseJoinColumns = @JoinColumn(name = "channel_id")
     )
-    private Set<Channel> releaseChannels;
+    private Set<Channel> releaseChannels = new HashSet<>();
 
     @Schema(
             name = "releaseChannels",
@@ -64,6 +64,7 @@ public class Project implements Comparable<Project> {
     )
     @JsonSerialize
     @Unmodifiable
+    @SuppressWarnings("unused")
     public Set<String> getReleaseChannels() {
         return releaseChannels.stream().map(Channel::getName).collect(Collectors.toSet());
     }
@@ -191,6 +192,15 @@ public class Project implements Comparable<Project> {
         @Nullable
         @Builder.Default
         private BigDecimal suggestedRetailPrice = null;
+
+        @Schema(
+                name = "linkedDiscordRole",
+                description = "The snowflake of a Discord role to couple with this project for purchase grants.",
+                example = "123456789012345678"
+        )
+        @Length(max = 18)
+        @Nullable
+        private String linkedDiscordRole = null;
 
         @Schema(
                 name = "archived",

@@ -33,6 +33,7 @@ public class Version {
 
     @Id
     @JsonIgnore
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @ManyToOne
@@ -56,6 +57,7 @@ public class Version {
             description = "Changelog for the version."
     )
     @Builder.Default
+    @Column(length = Integer.MAX_VALUE)
     private String changelog = DEFAULT_CHANGELOG;
 
     @Schema(

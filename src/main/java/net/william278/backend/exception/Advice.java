@@ -2,7 +2,6 @@ package net.william278.backend.exception;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.constraints.NotNull;
-import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -31,10 +30,16 @@ class Advice {
         return this.error(HttpStatus.INTERNAL_SERVER_ERROR, "An internal error occurred while uploading a file.");
     }
 
-    @ExceptionHandler(ChannelNotFound.class)
+    @ExceptionHandler(DownloadNotFound.class)
     @ResponseBody
     public ResponseEntity<?> downloadNotFound(final ChannelNotFound exception) {
         return this.error(HttpStatus.NOT_FOUND, "Download not found.");
+    }
+
+    @ExceptionHandler(ChannelNotFound.class)
+    @ResponseBody
+    public ResponseEntity<?> channelNotFound(final ChannelNotFound exception) {
+        return this.error(HttpStatus.NOT_FOUND, "Channel not found.");
     }
 
     @ExceptionHandler(DistributionNotFound.class)

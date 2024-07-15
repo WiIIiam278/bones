@@ -13,9 +13,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.net.URI;
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Data
 @Entity
@@ -33,6 +36,12 @@ public class User implements OAuth2User {
             description = "The user's unique ID."
     )
     private String id;
+
+    @Schema(
+            name = "createdAt",
+            description = "When the user created their account."
+    )
+    private Instant createdAt = Instant.now();
 
     @Schema(
             name = "name",
@@ -64,8 +73,9 @@ public class User implements OAuth2User {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "project_slug")
     )
+    @Setter(AccessLevel.NONE)
     @JsonIgnore
-    private List<Project> purchases;
+    private Set<Project> purchases;
 
     @SuppressWarnings("unused")
     @JsonSerialize
@@ -76,8 +86,12 @@ public class User implements OAuth2User {
             name = "purchases",
             description = "List of projects, by slug, that the user has purchased"
     )
-    public List<String> getPurchases() {
-        return purchases.stream().map(Project::getSlug).toList();
+    public Set<String> getPurchases() {
+        return purchases.stream().map(Project::getSlug).collect(Collectors.toSet());
+    }
+
+    public boolean setPurchases(@NotNull List<Project> purchases) {
+        return this.purchases.addAll(purchases);
     }
 
     @JsonSerialize

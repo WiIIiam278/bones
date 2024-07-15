@@ -38,3 +38,7 @@ out/
 
 ### Environment ###
 .env
+
+### Package Files ###
+downloads/
+*.jar

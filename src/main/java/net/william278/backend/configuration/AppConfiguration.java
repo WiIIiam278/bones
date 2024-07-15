@@ -30,5 +30,6 @@ public class AppConfiguration {
 
     private String modrinthApiToken;
     private String githubApiToken;
+    private String discordGuildId;
 
 }

@@ -24,10 +24,10 @@ public interface VersionRepository extends JpaRepository<Version, Integer> {
     List<Version> getAllByProject(@NotNull Project project);
 
     @NotNull
-    Page<Version> getAllByProjectAndChannelOrderByTimestamp(@NotNull Project project, @NotNull Channel channel,
-                                                            @NotNull PageRequest pageRequest);
+    Page<Version> getAllByProjectAndChannelOrderByTimestampDesc(@NotNull Project project, @NotNull Channel channel,
+                                                                @NotNull PageRequest pageRequest);
 
     @NotNull
-    Optional<Version> getTopByProjectAndChannelOrderByTimestamp(@NotNull Project project, @NotNull Channel channel);
+    Optional<Version> getTopByProjectAndChannelOrderByTimestampDesc(@NotNull Project project, @NotNull Channel channel);
 
 }

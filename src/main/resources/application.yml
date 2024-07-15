@@ -33,6 +33,7 @@ spring:
             scope:
               - identify
               - email
+              - guilds.members.read
             redirect-uri: '{baseUrl}/login/oauth2/code/discord'
             clientName: 'William278.net backend'
         provider:
@@ -53,6 +54,7 @@ app:
   default-admin-discord-id: ${DEFAULT_ADMIN_DISCORD_ID}
   modrinth-api-token: ${MODRINTH_API_KEY}
   github-api-token: ${GITHUB_API_KEY}
+  discord-guild-id: ${DISCORD_GUILD_ID}
 
 # Provide OpenAPI docs
 springdoc:

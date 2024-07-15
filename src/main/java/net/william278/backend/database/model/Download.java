@@ -2,10 +2,7 @@ package net.william278.backend.database.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +26,7 @@ public class Download {
 
     @Id
     @JsonIgnore
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Schema(
@@ -43,6 +41,7 @@ public class Download {
             pattern = PATTERN,
             example = "HuskHomes-Paper-4.7.jar"
     )
+    @Column(length = 4096)
     private String name;
 
     @Schema(
@@ -51,6 +50,7 @@ public class Download {
             pattern = "[a-f0-9]{32}",
             example = "d41d8cd98f00b204e9800998ecf8427e"
     )
+    @Column(length = 32)
     private String md5;
 
     @Schema(
