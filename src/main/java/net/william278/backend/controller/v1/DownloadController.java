@@ -3,8 +3,12 @@ package net.william278.backend.controller.v1;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.*;
@@ -26,10 +30,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
 
-@Schema(name = "Downloads")
 @RestController
+@Tags(value = @Tag(name = "Downloads"))
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-public class DownloadsController {
+public class DownloadController {
 
     private static final CacheControl CACHE = CacheControl.empty().cachePublic().sMaxAge(Duration.ofDays(7));
     private final AppConfiguration configuration;
@@ -39,8 +43,8 @@ public class DownloadsController {
     private final DistributionRepository distributions;
 
     @Autowired
-    public DownloadsController(AppConfiguration configuration, ProjectRepository projects, VersionRepository versions,
-                               ChannelRepository channels, DistributionRepository distributions) {
+    public DownloadController(AppConfiguration configuration, ProjectRepository projects, VersionRepository versions,
+                              ChannelRepository channels, DistributionRepository distributions) {
         this.configuration = configuration;
         this.projects = projects;
         this.versions = versions;
@@ -48,8 +52,12 @@ public class DownloadsController {
         this.distributions = distributions;
     }
 
+    @Operation(
+            summary = "Download a project's version."
+    )
     @ApiResponse(
             responseCode = "200",
+            description = "The requested version download.",
             headers = {
                     @Header(
                             name = "Content-Disposition",
@@ -72,38 +80,42 @@ public class DownloadsController {
             responseCode = "403",
             description = "The version is restricted and the user is not authenticated."
     )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project, channel, version, and/or distribution was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
     @GetMapping(
-            value = "/v1/projects/{project:" + Project.PATTERN
-                    + "}/channels/{channel:" + Channel.PATTERN
-                    + "}/versions/{version:" + Version.PATTERN
-                    + "}/distributions/{distribution:" + Distribution.PATTERN + "}",
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN
+                    + "}/channels/{channelName:" + Channel.PATTERN
+                    + "}/versions/{versionName:" + Version.PATTERN
+                    + "}/distributions/{distributionName:" + Distribution.PATTERN + "}",
             produces = {
                     MediaType.APPLICATION_JSON_VALUE,
                     MediaType.ALL_VALUE
             }
     )
-    @Operation(summary = "Downloads a specific project version on a certain channel.")
     @CrossOrigin
     public ResponseEntity<?> download(
             @AuthenticationPrincipal User principal,
+
             @Parameter(name = "project", description = "The project identifier.", example = "HuskHomes")
-            @PathVariable("project")
-            @Pattern(regexp = Project.PATTERN) //
-            final String projectName,
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug,
+
             @Parameter(description = "The release channel to target.")
-            @PathVariable("channel")
-            @Pattern(regexp = Version.PATTERN) //
-            final String channelName,
+            @Pattern(regexp = Channel.PATTERN)
+            @PathVariable String channelName,
+
             @Parameter(description = "The distribution to target.")
-            @PathVariable("distribution")
-            @Pattern(regexp = Distribution.PATTERN) //
-            final String distributionName,
+            @Pattern(regexp = Distribution.PATTERN)
+            @PathVariable String distributionName,
+
             @Parameter(description = "The name of the version to download.")
-            @PathVariable("version")
-            @Pattern(regexp = Version.PATTERN) //
-            final String versionName
+            @Pattern(regexp = Version.PATTERN)
+            @PathVariable String versionName
     ) {
-        final Project project = this.projects.findById(projectName).orElseThrow(ProjectNotFound::new);
+        final Project project = this.projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
         final Channel channel = this.channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
         final Version version = this.versions.findByProjectAndChannelAndName(project, channel, versionName)
                 .orElseThrow(VersionNotFound::new);
@@ -117,22 +129,23 @@ public class DownloadsController {
 
         // Restrict download if the version is restricted and the user is not authenticated
         if (version.isRestricted() && !version.canDownload(principal)) {
-            throw new DownloadRestricted();
+            throw new NoPermission();
         }
 
         try {
-            return new JavaArchive(version.getDownloadPathFor(distribution, this.configuration), CACHE);
+            return new DownloadArchive(version.getDownloadPathFor(distribution, this.configuration), CACHE);
         } catch (Throwable e) {
             throw new DownloadFailed();
         }
     }
 
-    private static class JavaArchive extends ResponseEntity<FileSystemResource> {
+    private static class DownloadArchive extends ResponseEntity<FileSystemResource> {
 
-        JavaArchive(final Path path, final CacheControl cache) throws IOException {
+        private DownloadArchive(final Path path, final CacheControl cache) throws IOException {
             super(new FileSystemResource(path), headersFor(path, cache), HttpStatus.OK);
         }
 
+        @NotNull
         private static HttpHeaders headersFor(final Path path, final CacheControl cache) throws IOException {
             final HttpHeaders headers = new HttpHeaders();
             headers.setCacheControl(cache);

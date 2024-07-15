@@ -43,12 +43,13 @@ public class Distribution {
     private String name;
 
     @Schema(
-            name = "group",
+            name = "groupName",
             description = "The distribution group name.",
-            pattern = PATTERN,
             example = "fabric"
     )
-    private String group;
+    @Nullable
+    @Builder.Default
+    private String groupName = null;
 
     @Schema(
             name = "description",
@@ -69,6 +70,7 @@ public class Distribution {
     @Builder.Default
     private Boolean archived = false;
 
+    @SuppressWarnings("unused")
     public boolean isArchived() {
         return archived != null && archived;
     }

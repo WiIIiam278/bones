@@ -68,7 +68,7 @@ public class DiscordOAuthUserService extends DefaultOAuth2UserService {
                 .email(oAuth2User.getAttribute("email"))
                 .avatar(oAuth2User.getAttribute("avatar"))
                 .admin(isAdmin)
-                .projects(new ArrayList<>())
+                .purchases(new ArrayList<>())
                 .build();
     }
 

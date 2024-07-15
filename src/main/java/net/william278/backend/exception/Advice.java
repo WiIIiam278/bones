@@ -1,6 +1,8 @@
 package net.william278.backend.exception;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import jakarta.validation.constraints.NotNull;
+import lombok.SneakyThrows;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -77,9 +79,9 @@ class Advice {
         return this.error(HttpStatus.FORBIDDEN, "You do not have permission to perform this action.");
     }
 
+    @NotNull
     private ResponseEntity<?> error(final HttpStatus status, final String error) {
-        return new ResponseEntity<>(
-                this.json.createObjectNode().put("error", error), status
-        );
+        return new ErrorResponse(error).toResponseEntity(status);
     }
+
 }

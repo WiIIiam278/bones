@@ -1,11 +1,17 @@
 package net.william278.backend.controller.v1;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.validation.constraints.Pattern;
 import lombok.*;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.repository.ProjectRepository;
+import net.william278.backend.exception.ErrorResponse;
 import net.william278.backend.exception.ProjectNotFound;
 import net.william278.backend.service.GitHubDataService;
 import net.william278.backend.service.ModrinthDataService;
@@ -22,8 +28,8 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-@Schema(name = "Stats")
 @RestController
+@Tags(value = @Tag(name = "Project Stats"))
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 public class StatsController {
 
@@ -52,13 +58,22 @@ public class StatsController {
     @ApiResponse(
             responseCode = "200"
     )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
     @GetMapping(
-            value = "/v1/projects/{projectId}/stats",
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}/stats",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @CrossOrigin
-    public Stats getProject(@PathVariable String projectId) {
-        return fetchStats(projects.findById(projectId).orElseThrow(ProjectNotFound::new));
+    public Stats getProject(
+            @Parameter(description = "The slug of the project to get stats for.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug
+    ) {
+        return fetchStats(projects.findById(projectSlug).orElseThrow(ProjectNotFound::new));
     }
 
     // Combine the stats from all services
@@ -80,6 +95,7 @@ public class StatsController {
         return newStats;
     }
 
+    // Get the stats from all services
     @NotNull
     private Stats getStatsNow(@NotNull Project project) {
         return Stream.of(github, modrinth, spigot)

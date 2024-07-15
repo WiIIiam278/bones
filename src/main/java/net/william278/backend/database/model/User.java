@@ -59,23 +59,25 @@ public class User implements OAuth2User {
     private Boolean admin = false;
 
     @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "purchases",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "project_slug")
+    )
     @JsonIgnore
-    private List<Project> projects;
+    private List<Project> purchases;
 
-    public boolean hasProjectPermission(@NotNull Project project) {
-        return admin || projects.contains(project);
-    }
-
+    @SuppressWarnings("unused")
     @JsonSerialize
-    @JsonAlias("projects")
+    @JsonAlias("purchases")
     @NotNull
     @Unmodifiable
     @Schema(
-            name = "projects",
-            description = "List of project IDs the user has access to downloads for"
+            name = "purchases",
+            description = "List of projects, by slug, that the user has purchased"
     )
-    public List<String> getProjects() {
-        return projects.stream().map(Project::getSlug).toList();
+    public List<String> getPurchases() {
+        return purchases.stream().map(Project::getSlug).toList();
     }
 
     @JsonSerialize
@@ -97,6 +99,10 @@ public class User implements OAuth2User {
         return admin != null && admin;
     }
 
+    public boolean hasProjectPermission(@NotNull Project project) {
+        return admin || purchases.contains(project);
+    }
+
     @JsonIgnore
     @Override
     @Unmodifiable
@@ -106,7 +112,7 @@ public class User implements OAuth2User {
                 "username", name,
                 "email", email,
                 "avatar", getAvatar(),
-                "projects", projects,
+                "projects", purchases,
                 "admin", admin
         );
     }

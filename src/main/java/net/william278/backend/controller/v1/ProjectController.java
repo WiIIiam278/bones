@@ -1,0 +1,177 @@
+package net.william278.backend.controller.v1;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.validation.constraints.Pattern;
+import net.william278.backend.database.model.Project;
+import net.william278.backend.database.model.User;
+import net.william278.backend.database.repository.ProjectRepository;
+import net.william278.backend.exception.*;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+import static net.william278.backend.controller.RootController.CORS_FRONTEND_ORIGIN;
+
+@RestController
+@Tags(value = @Tag(name = "Projects"))
+@RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
+public class ProjectController {
+
+    private final ProjectRepository projects;
+
+    @Autowired
+    public ProjectController(ProjectRepository projects) {
+        this.projects = projects;
+    }
+
+    @Operation(
+            summary = "Get a list of all projects."
+    )
+    @ApiResponse(
+            responseCode = "200"
+    )
+    @GetMapping(
+            value = "/v1/projects",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin
+    public List<Project> getProjects() {
+        return projects.findAll();
+    }
+
+    @Operation(
+            summary = "Get a specific project."
+    )
+    @ApiResponse(
+            responseCode = "200"
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @GetMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin
+    public Project getProject(
+            @Parameter(description = "The slug of the project to get.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug
+    ) {
+        return projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
+    }
+
+    @Operation(
+            summary = "Create or update a project.",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @ApiResponse(
+            responseCode = "200"
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user is not an admin.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @PutMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin(
+            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
+            methods = {RequestMethod.PUT}
+    )
+    public Project putProject(
+            @AuthenticationPrincipal User principal,
+
+            @Parameter(description = "The slug of the project to create/update.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug,
+
+            @RequestBody Project project
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        if (!principal.isAdmin()) {
+            throw new NoPermission();
+        }
+        if (projectSlug.isBlank() || !projectSlug.matches(Project.PATTERN)) {
+            throw new InvalidProject();
+        }
+        project.setSlug(projectSlug);
+        return projects.save(project);
+    }
+
+    @Operation(
+            summary = "Delete a project.",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The project was deleted."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user is not an admin.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @DeleteMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin(
+            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
+            methods = {RequestMethod.DELETE}
+    )
+    public Project deleteProject(
+            @AuthenticationPrincipal User principal,
+
+            @Parameter(description = "The slug of the project to delete.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        if (!principal.isAdmin()) {
+            throw new NoPermission();
+        }
+        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
+        projects.deleteById(projectSlug);
+        return project;
+    }
+
+}

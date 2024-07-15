@@ -1,16 +1,17 @@
 package net.william278.backend.database.repository;
 
 import net.william278.backend.database.model.Channel;
-import net.william278.backend.database.model.Distribution;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.Version;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
 
-public interface VersionRepository extends CrudRepository<Version, Integer> {
+public interface VersionRepository extends JpaRepository<Version, Integer> {
 
     @NotNull
     Optional<Version> findById(@NotNull Integer id);
@@ -23,16 +24,8 @@ public interface VersionRepository extends CrudRepository<Version, Integer> {
     List<Version> getAllByProject(@NotNull Project project);
 
     @NotNull
-    List<Version> getAllByProjectAndChannel(@NotNull Project project, @NotNull Channel channel);
-
-    @NotNull
-    default List<Version> getAllByProjectAndChannelAndDistributionsIsContaining(@NotNull Project project,
-                                                                                @NotNull Channel channel,
-                                                                                @NotNull Distribution distribution) {
-        return getAllByProjectAndChannel(project, channel).stream()
-                .filter(version -> version.getDistributions().contains(distribution))
-                .toList();
-    }
+    Page<Version> getAllByProjectAndChannelOrderByTimestamp(@NotNull Project project, @NotNull Channel channel,
+                                                            @NotNull PageRequest pageRequest);
 
     @NotNull
     Optional<Version> getTopByProjectAndChannelOrderByTimestamp(@NotNull Project project, @NotNull Channel channel);

@@ -4,17 +4,16 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.validator.constraints.Length;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.Unmodifiable;
 
 import java.math.BigDecimal;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Schema(
         name = "Project",
@@ -47,6 +46,33 @@ public class Project implements Comparable<Project> {
     private boolean restricted;
 
     @JsonIgnore
+    @Setter(AccessLevel.NONE)
+    @Getter(AccessLevel.NONE)
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "project_release_channels",
+            joinColumns = @JoinColumn(name = "project_slug"),
+            inverseJoinColumns = @JoinColumn(name = "channel_id")
+    )
+    private Set<Channel> releaseChannels;
+
+    @Schema(
+            name = "releaseChannels",
+            description = "The release channels the project has released versions on.",
+            example = "[\"stable\", \"beta\"]",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
+    @JsonSerialize
+    @Unmodifiable
+    public Set<String> getReleaseChannels() {
+        return releaseChannels.stream().map(Channel::getName).collect(Collectors.toSet());
+    }
+
+    public boolean addReleaseChannel(@NotNull Channel channel) {
+        return releaseChannels.add(channel);
+    }
+
+    @JsonIgnore
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.NONE)
     @Column(length = Integer.MAX_VALUE)
@@ -64,6 +90,7 @@ public class Project implements Comparable<Project> {
     }
 
     @SneakyThrows
+    @SuppressWarnings("unused")
     public void setMetadata(@NotNull Metadata metadata) {
         this.metadata = new ObjectMapper().writeValueAsString(metadata);
     }
@@ -217,7 +244,7 @@ public class Project implements Comparable<Project> {
         @Schema(
                 name = "properties",
                 description = "A map of other metadata properties associated with the project.",
-                example = "[{property: \"special-property\", value: \"special-value\"}]"
+                example = "[{\"key\": \"property-key\", \"value\": \"property-value\"}]"
         )
         @Builder.Default
         private List<Property> properties = new ArrayList<>();
