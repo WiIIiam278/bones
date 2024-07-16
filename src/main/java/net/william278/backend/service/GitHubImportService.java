@@ -104,7 +104,7 @@ public class GitHubImportService {
                                                @NotNull String versionName, @NotNull Channel channel,
                                                @NotNull Map<String, Distribution> distributionMatchers) {
         // Download from asset.getBrowserDownloadUrl() and place at getUploadPathFor() (making dirs if needed)
-        final OkHttpClient client = HTTPUtils.createClient("github-import");
+        final OkHttpClient client = HTTPUtils.createClient();
         final Request request = new Request.Builder()
                 .url(asset.getBrowserDownloadUrl())
                 .addHeader("Accept", "application/octet-stream")
@@ -164,9 +164,9 @@ public class GitHubImportService {
     @Schema(description = "The source of versions to import.")
     public enum VersionSource {
         @Schema(description = "Import versions from GitHub releases.")
-        RELEASE;
+        RELEASE
 //        @Schema(description = "Import versions from GitHub commits.")
-//        COMMIT("alpha");
+//        COMMIT;
 
     }
 

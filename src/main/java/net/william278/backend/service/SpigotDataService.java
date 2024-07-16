@@ -22,7 +22,7 @@ public class SpigotDataService implements StatsService {
 
     private static final String ENDPOINT_URL = "https://api.spiget.org/v2/resources/%s";
 
-    private final OkHttpClient client = HTTPUtils.createClient("spigot");
+    private final OkHttpClient client = HTTPUtils.createCachingClient("spigot");
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Override

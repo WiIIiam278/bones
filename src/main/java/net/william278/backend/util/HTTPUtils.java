@@ -33,7 +33,12 @@ public class HTTPUtils {
     }
 
     @SneakyThrows
-    public static OkHttpClient createClient(@NotNull String name) {
+    public static OkHttpClient createClient() {
+        return new OkHttpClient().newBuilder().build();
+    }
+
+    @SneakyThrows
+    public static OkHttpClient createCachingClient(@NotNull String name) {
         return new OkHttpClient().newBuilder().cache(new Cache(
                 Files.createTempDirectory("%s.cache".formatted(name)).toFile(),
                 10 * 1024 * 1024

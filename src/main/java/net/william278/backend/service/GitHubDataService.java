@@ -22,7 +22,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class GitHubDataService implements StatsService {
 
     private final static int PAGE_SIZE = 50;
-
     private final GitHub github;
 
     @Autowired
@@ -30,7 +29,7 @@ public class GitHubDataService implements StatsService {
     public GitHubDataService(@NotNull AppConfiguration config) {
         this.github = new GitHubBuilder()
                 .withOAuthToken(config.getGithubApiToken())
-                .withConnector(new OkHttpGitHubConnector(HTTPUtils.createClient("github")))
+                .withConnector(new OkHttpGitHubConnector(HTTPUtils.createCachingClient("github")))
                 .build();
     }
 

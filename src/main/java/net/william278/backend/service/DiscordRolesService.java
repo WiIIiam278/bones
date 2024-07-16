@@ -28,18 +28,17 @@ public class DiscordRolesService {
     private static final String API_URL = "https://discord.com/api/v10";
     private static final String ENDPOINT = "/users/@me/guilds/%s/member";
 
-    private final String guildId;
-    private final UsersRepository users;
-    private final ProjectRepository projectRepository;
-
-    private final OkHttpClient client = HTTPUtils.createClient("discord");
+    private final OkHttpClient client = HTTPUtils.createClient();
     private final ObjectMapper mapper = new ObjectMapper();
+    private final String guildId;
+    private final ProjectRepository projects;
+    private final UsersRepository users;
 
     @Autowired
-    public DiscordRolesService(AppConfiguration config, UsersRepository users, ProjectRepository projectRepository) {
+    public DiscordRolesService(AppConfiguration config, ProjectRepository projects, UsersRepository users) {
         this.guildId = config.getDiscordGuildId();
+        this.projects = projects;
         this.users = users;
-        this.projectRepository = projectRepository;
     }
 
     public void updateMemberRoles(@NotNull User user, @NotNull String accessToken) {
@@ -49,9 +48,11 @@ public class DiscordRolesService {
                 .build();
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                log.warn("Failed to update roles for user {}: HTTP {}", user.getId(), response.code());
+                log.warn("HTTP {} fetching roles for {} - are they a guild member?", response.code(), user.getName());
                 return;
             }
+
+            // Get the member's roles
             final String body = Objects.requireNonNull(response.body(), "response body").string();
             final DiscordMember member = mapper.readValue(body, DiscordMember.class);
 
@@ -77,7 +78,7 @@ public class DiscordRolesService {
 
     @NotNull
     private Map<String, Project> getProjectRoles() {
-        return projectRepository.findAllByRestrictedTrue()
+        return projects.findAllByRestrictedTrue()
                 .stream().filter(p -> p.getMetadata().getLinkedDiscordRole() != null)
                 .collect(Collectors.toMap(p -> p.getMetadata().getLinkedDiscordRole(), p -> p));
     }
