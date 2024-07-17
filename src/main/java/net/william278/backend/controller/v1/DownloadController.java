@@ -128,8 +128,13 @@ public class DownloadController {
         }
 
         // Restrict download if the version is restricted and the user is not authenticated
-        if (version.isRestricted() && !version.canDownload(principal)) {
-            throw new NoPermission();
+        if (version.isRestricted()) {
+            if (principal == null) {
+                throw new NotAuthenticated();
+            }
+            if (!version.canDownload(principal)) {
+                throw new NoPermission();
+            }
         }
 
         try {

@@ -13,6 +13,7 @@ import jakarta.validation.constraints.Pattern;
 import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.*;
 import net.william278.backend.database.repository.ChannelRepository;
+import net.william278.backend.database.repository.DistributionRepository;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.database.repository.VersionRepository;
 import net.william278.backend.exception.*;
@@ -47,15 +48,17 @@ public class VersionController {
     private final ChannelRepository channels;
     private final VersionRepository versions;
     private final GitHubImportService githubImporter;
+    private final DistributionRepository distributions;
 
     @Autowired
     public VersionController(AppConfiguration config, ProjectRepository projects, ChannelRepository channels,
-                             VersionRepository versions, GitHubImportService gitHubImportService) {
+                             VersionRepository versions, GitHubImportService gitHubImportService, DistributionRepository distributions) {
         this.config = config;
         this.projects = projects;
         this.channels = channels;
         this.versions = versions;
         this.githubImporter = gitHubImportService;
+        this.distributions = distributions;
     }
 
     @Operation(
@@ -85,6 +88,44 @@ public class VersionController {
         final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
         final Channel channel = channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
         return versions.getAllByProjectAndChannelOrderByTimestampDesc(project, channel, PageRequest.of(page, size));
+    }
+
+    @Operation(
+            summary = "Get a project's versions on a specific channel that contain a specific distribution."
+    )
+    @ApiResponse(
+            responseCode = "200"
+    )
+    @GetMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN
+                    + "}/channels/{channelName:" + Channel.PATTERN
+                    + "}/distributions/{distributionName:" + Distribution.PATTERN + "}/versions",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin
+    public Page<Version> getProjectDistributionsVersions(
+            @Parameter(description = "The slug of the project to get versions for.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug,
+
+            @Parameter(description = "The name of the release channel to get versions on.")
+            @Pattern(regexp = Channel.PATTERN)
+            @PathVariable String channelName,
+
+            @Parameter(description = "The name of the distribution to get versions for.")
+            @Pattern(regexp = Distribution.PATTERN)
+            @PathVariable String distributionName,
+
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "15") int size
+    ) {
+        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
+        final Channel channel = channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
+        final Distribution distribution = distributions.findDistributionByName(distributionName).orElseThrow(DistributionNotFound::new);
+
+        return versions.getAllByProjectAndChannelAndDownloadsDistributionOrderByTimestampDesc(
+                project, channel, distribution, PageRequest.of(page, size)
+        );
     }
 
     @Operation(

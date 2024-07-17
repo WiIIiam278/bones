@@ -1,6 +1,7 @@
 package net.william278.backend.database.repository;
 
 import net.william278.backend.database.model.Channel;
+import net.william278.backend.database.model.Distribution;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.Version;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,12 @@ public interface VersionRepository extends JpaRepository<Version, Integer> {
     @NotNull
     Page<Version> getAllByProjectAndChannelOrderByTimestampDesc(@NotNull Project project, @NotNull Channel channel,
                                                                 @NotNull PageRequest pageRequest);
+
+    @NotNull
+    Page<Version> getAllByProjectAndChannelAndDownloadsDistributionOrderByTimestampDesc(@NotNull Project project,
+                                                                                        @NotNull Channel channel,
+                                                                                        @NotNull Distribution distribution,
+                                                                                        @NotNull PageRequest pageRequest);
 
     @NotNull
     Optional<Version> getTopByProjectAndChannelOrderByTimestampDesc(@NotNull Project project, @NotNull Channel channel);
