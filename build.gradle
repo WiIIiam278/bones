@@ -35,7 +35,7 @@ dependencies {
     implementation 'org.springframework.session:spring-session-core'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
-    runtimeOnly 'com.mysql:mysql-connector-j'
+    implementation 'com.mysql:mysql-connector-j'
 
     // Statistics clients
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
