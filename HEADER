@@ -1,5 +1,5 @@
 /*
- * MIT License
+ * This file is part of william278-backend, licensed under the MIT License.
  *
  * Copyright (c) 2024 William278
  *
@@ -21,14 +21,3 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
-
-package net.william278.backend.exception;
-
-import java.io.Serial;
-
-public class NotAuthenticated extends RuntimeException {
-
-    @Serial
-    private static final long serialVersionUID = -345432534563412L;
-
-}

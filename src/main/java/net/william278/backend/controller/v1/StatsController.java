@@ -1,3 +1,27 @@
+/*
+ * MIT License
+ *
+ * Copyright (c) 2024 William278
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in all
+ * copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 package net.william278.backend.controller.v1;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -13,9 +37,7 @@ import net.william278.backend.database.model.Project;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.exception.ErrorResponse;
 import net.william278.backend.exception.ProjectNotFound;
-import net.william278.backend.service.GitHubDataService;
-import net.william278.backend.service.ModrinthDataService;
-import net.william278.backend.service.SpigotDataService;
+import net.william278.backend.service.*;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
@@ -38,6 +60,8 @@ public class StatsController {
     private final GitHubDataService github;
     private final ModrinthDataService modrinth;
     private final SpigotDataService spigot;
+//    private final PolymartDataService polymart;
+//    private final HangarDataService hangar;
     private final ProjectRepository projects;
     private final Map<String, CachedStats> cache = new HashMap<>();
 
@@ -45,10 +69,12 @@ public class StatsController {
     @SneakyThrows
     @Autowired
     public StatsController(GitHubDataService github, ModrinthDataService modrinth, SpigotDataService spigot,
-                           ProjectRepository projects) {
+                           /*PolymartDataService polymart, HangarDataService hangar,*/ ProjectRepository projects) {
         this.github = github;
         this.modrinth = modrinth;
         this.spigot = spigot;
+//        this.polymart = polymart;
+//        this.hangar = hangar;
         this.projects = projects;
     }
 
@@ -98,7 +124,7 @@ public class StatsController {
     // Get the stats from all services
     @NotNull
     private Stats getStatsNow(@NotNull Project project) {
-        return Stream.of(github, modrinth, spigot)
+        return Stream.of(github, modrinth, spigot/*, polymart,  hangar*/)
                 .map((service) -> service.getStats(project))
                 .filter(Optional::isPresent).map(Optional::get)
                 .reduce(Stats::combine)
@@ -154,9 +180,8 @@ public class StatsController {
         public StatsController.Stats combine(@NotNull StatsController.Stats other) {
             return new Stats(
                     this.downloadCount + other.downloadCount,
-                    other.numberOfRatings <= 0 ? this.numberOfRatings :
-                            (this.averageRating * this.numberOfRatings + other.averageRating * other.numberOfRatings) /
-                            (this.numberOfRatings + other.numberOfRatings),
+                    (this.averageRating * this.numberOfRatings + other.averageRating * other.numberOfRatings)
+                    / (this.numberOfRatings + other.numberOfRatings),
                     this.numberOfRatings + other.numberOfRatings,
                     this.interactions + other.interactions
             );
