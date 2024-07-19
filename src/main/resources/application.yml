@@ -97,6 +97,10 @@ server:
     whitelabel:
       enabled: false
   port: ${PORT}
+  servlet:
+    session:
+      cookie:
+        domain: ${COOKIE_DOMAIN}
 
 # Debug
 logging:
