@@ -25,7 +25,6 @@
 package net.william278.backend.configuration;
 
 import lombok.RequiredArgsConstructor;
-import net.william278.backend.security.CsrfTokenHeaderRequestHandler;
 import net.william278.backend.security.DiscordOAuthUserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -37,6 +36,7 @@ import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCo
 import org.springframework.security.oauth2.client.endpoint.OAuth2AuthorizationCodeGrantRequestEntityConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository;
+import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
@@ -58,7 +58,9 @@ public class DiscordOAuthConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(c -> {
-                    c.csrfTokenRequestHandler(new CsrfTokenHeaderRequestHandler()); // https://stackoverflow.com/a/75047103
+                    final CsrfTokenRequestAttributeHandler handler = new CsrfTokenRequestAttributeHandler();
+                    handler.setCsrfRequestAttributeName(null); // https://stackoverflow.com/a/75047103
+                    c.csrfTokenRequestHandler(handler);
 
                     final CookieCsrfTokenRepository repo = new CookieCsrfTokenRepository();
                     repo.setCookieCustomizer(cookie -> cookie.domain(config.getCookieDomain()).build());
