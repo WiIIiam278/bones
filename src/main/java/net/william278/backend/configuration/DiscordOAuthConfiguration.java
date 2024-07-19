@@ -85,7 +85,7 @@ public class DiscordOAuthConfiguration {
                 })
                 .logout(l -> {
                     l.logoutRequestMatcher(new AntPathRequestMatcher("/logout"));
-                    l.deleteCookies("JSESSIONID");
+                    l.deleteCookies("JSESSIONID", "XSRF-TOKEN");
                     l.logoutSuccessUrl(config.getFrontendBaseUrl().toString());
                 })
                 .build();
@@ -110,7 +110,7 @@ public class DiscordOAuthConfiguration {
         DefaultCookieSerializer serializer = new DefaultCookieSerializer();
         serializer.setCookieName("JSESSIONID");
         serializer.setCookiePath("/");
-        serializer.setDomainNamePattern("^.+?\\.(\\w+\\.[a-z]+)$");
+        serializer.setDomainName(config.getCookieDomain());
         return serializer;
     }
 
