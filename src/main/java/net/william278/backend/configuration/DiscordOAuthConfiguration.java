@@ -45,6 +45,8 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+import static net.william278.backend.configuration.WebConfig.ALLOWED_CORS_HEADERS;
+import static net.william278.backend.configuration.WebConfig.ALLOWED_CORS_METHODS;
 import static net.william278.backend.util.OAuthUtils.withUserAgent;
 
 @Configuration
@@ -59,10 +61,10 @@ public class DiscordOAuthConfiguration {
         return http
                 .cors(c -> {
                     final CorsConfiguration cors = new CorsConfiguration();
-                    cors.setAllowedOrigins(List.of(config.getFrontendBaseUrl().toString()));
-                    cors.setAllowedMethods(List.of("*"));
-                    cors.setAllowedHeaders(List.of("*"));
                     cors.setAllowCredentials(true);
+                    cors.setAllowedOrigins(List.of(config.getFrontendBaseUrl().toString()));
+                    cors.setAllowedMethods(List.of(ALLOWED_CORS_METHODS));
+                    cors.setAllowedHeaders(List.of(ALLOWED_CORS_HEADERS));
                     final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                     source.registerCorsConfiguration("/**", cors);
                     c.configurationSource(source);
