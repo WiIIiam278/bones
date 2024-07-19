@@ -45,8 +45,6 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
-import static net.william278.backend.configuration.WebConfig.ALLOWED_CORS_HEADERS;
-import static net.william278.backend.configuration.WebConfig.ALLOWED_CORS_METHODS;
 import static net.william278.backend.util.OAuthUtils.withUserAgent;
 
 @Configuration
@@ -59,17 +57,6 @@ public class DiscordOAuthConfiguration {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
-                .cors(c -> {
-                    final CorsConfiguration cors = new CorsConfiguration();
-                    cors.setAllowCredentials(true);
-                    cors.setAllowedOrigins(List.of(config.getFrontendBaseUrl().toString()));
-                    cors.setAllowedMethods(List.of(ALLOWED_CORS_METHODS));
-                    cors.setAllowedHeaders(List.of(ALLOWED_CORS_HEADERS));
-
-                    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-                    source.registerCorsConfiguration("/**", cors);
-                    c.configurationSource(source);
-                })
                 .csrf(c -> {
                     final CsrfTokenRequestAttributeHandler handler = new CsrfTokenRequestAttributeHandler();
                     handler.setCsrfRequestAttributeName(null); // https://stackoverflow.com/a/75047103
@@ -78,6 +65,17 @@ public class DiscordOAuthConfiguration {
                     final CookieCsrfTokenRepository repo = new CookieCsrfTokenRepository();
                     repo.setCookieCustomizer(cookie -> cookie.domain(config.getCookieDomain()).build());
                     c.csrfTokenRepository(repo);
+                })
+                .cors(c -> {
+                    final CorsConfiguration cors = new CorsConfiguration();
+                    cors.setAllowCredentials(true);
+                    cors.setAllowedOrigins(List.of(config.getFrontendBaseUrl().toString()));
+                    cors.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE"));
+                    cors.setAllowedHeaders(List.of("Cookie", "Content-Type", "X-XSRF-TOKEN"));
+
+                    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                    source.registerCorsConfiguration("/**", cors);
+                    c.configurationSource(source);
                 })
                 .oauth2Login(a -> {
                     a.loginPage("/oauth2/authorization/discord");
