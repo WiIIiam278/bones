@@ -44,8 +44,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static net.william278.backend.controller.RootController.CORS_FRONTEND_ORIGIN;
-
 @RestController
 @Tags(value = @Tag(name = "Projects"))
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -68,7 +66,7 @@ public class ProjectController {
             value = "/v1/projects",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
+    @CrossOrigin(value = "*", allowCredentials = "false")
     public List<Project> getProjects() {
         return projects.findAll();
     }
@@ -88,7 +86,7 @@ public class ProjectController {
             value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
+    @CrossOrigin(value = "*", allowCredentials = "false")
     public Project getProject(
             @Parameter(description = "The slug of the project to get.")
             @Pattern(regexp = Project.PATTERN)
@@ -123,10 +121,7 @@ public class ProjectController {
             value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin(
-            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
-            methods = {RequestMethod.PUT}
-    )
+    @CrossOrigin
     public Project putProject(
             @AuthenticationPrincipal User principal,
 
@@ -176,10 +171,7 @@ public class ProjectController {
             value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin(
-            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
-            methods = {RequestMethod.DELETE}
-    )
+    @CrossOrigin
     public Project deleteProject(
             @AuthenticationPrincipal User principal,
 

@@ -40,6 +40,10 @@ import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.session.web.http.CookieSerializer;
 import org.springframework.session.web.http.DefaultCookieSerializer;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 import static net.william278.backend.util.OAuthUtils.withUserAgent;
 
@@ -48,11 +52,21 @@ import static net.william278.backend.util.OAuthUtils.withUserAgent;
 public class DiscordOAuthConfiguration {
 
     private final DiscordOAuthUserService discordOAuthUserService;
-    private final AppConfiguration configuration;
+    private final AppConfiguration config;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
+                .cors(c -> {
+                    final CorsConfiguration cors = new CorsConfiguration();
+                    cors.setAllowedOrigins(List.of(config.getFrontendBaseUrl().toString()));
+                    cors.setAllowedMethods(List.of("*"));
+                    cors.setAllowedHeaders(List.of("*"));
+                    cors.setAllowCredentials(true);
+                    final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+                    source.registerCorsConfiguration("/**", cors);
+                    c.configurationSource(source);
+                })
                 .csrf(c -> {
                     final CsrfTokenRequestAttributeHandler handler = new CsrfTokenRequestAttributeHandler();
                     handler.setCsrfRequestAttributeName(null); // https://stackoverflow.com/a/75047103
@@ -63,12 +77,12 @@ public class DiscordOAuthConfiguration {
                     a.loginPage("/oauth2/authorization/discord");
                     a.tokenEndpoint(e -> e.accessTokenResponseClient(this.accessTokenResponseClient()));
                     a.userInfoEndpoint(e -> e.userService(discordOAuthUserService));
-                    a.defaultSuccessUrl("%s/account".formatted(configuration.getFrontendBaseUrl().toString()), true);
+                    a.defaultSuccessUrl("%s/account".formatted(config.getFrontendBaseUrl().toString()), true);
                 })
                 .logout(l -> {
                     l.logoutRequestMatcher(new AntPathRequestMatcher("/logout"));
                     l.deleteCookies("JSESSIONID");
-                    l.logoutSuccessUrl(configuration.getFrontendBaseUrl().toString());
+                    l.logoutSuccessUrl(config.getFrontendBaseUrl().toString());
                 })
                 .build();
     }

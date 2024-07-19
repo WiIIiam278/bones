@@ -74,7 +74,7 @@ public class DistributionController {
             value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}/distributions",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
+    @CrossOrigin(value = "*", allowCredentials = "false")
     public List<Distribution> getProjectDistributions(
             @Parameter(description = "The slug of the project to get distributions for.")
             @Pattern(regexp = Project.PATTERN)

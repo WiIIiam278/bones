@@ -50,8 +50,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static net.william278.backend.controller.RootController.CORS_FRONTEND_ORIGIN;
-
 @RestController
 @Tags(value = @Tag(name = "Users"))
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -84,10 +82,7 @@ public class UserController {
             description = "The user is not an admin.",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
-    @CrossOrigin(
-            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
-            methods = {RequestMethod.GET}
-    )
+    @CrossOrigin
     public Page<User> findPaginated(
             @AuthenticationPrincipal User principal,
             @RequestParam(value = "page", defaultValue = "0") int page,
@@ -133,10 +128,7 @@ public class UserController {
             value = "/v1/users/{userId}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin(
-            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
-            methods = {RequestMethod.GET}
-    )
+    @CrossOrigin
     public User getUser(
             @AuthenticationPrincipal User principal,
 
@@ -179,10 +171,7 @@ public class UserController {
             value = "/v1/users/{userId}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin(
-            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
-            methods = {RequestMethod.DELETE}
-    )
+    @CrossOrigin
     public User deleteUser(
             @AuthenticationPrincipal User principal,
 
@@ -234,10 +223,7 @@ public class UserController {
             produces = {MediaType.APPLICATION_JSON_VALUE},
             consumes = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin(
-            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
-            methods = {RequestMethod.PUT}
-    )
+    @CrossOrigin
     public User setUserPurchases(
             @AuthenticationPrincipal User principal,
 
@@ -279,10 +265,7 @@ public class UserController {
             value = "/v1/users/@me",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin(
-            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
-            methods = {RequestMethod.GET}
-    )
+    @CrossOrigin
     public User getLoggedInUser(
             @AuthenticationPrincipal User principal
     ) {
@@ -309,10 +292,7 @@ public class UserController {
             value = "/v1/users/@me",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin(
-            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
-            methods = {RequestMethod.DELETE}
-    )
+    @CrossOrigin
     public User deleteLoggedInUser(
             @AuthenticationPrincipal User principal
     ) {

@@ -93,7 +93,7 @@ public class StatsController {
             value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}/stats",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
+    @CrossOrigin(value = "*", allowCredentials = "false")
     public Stats getProject(
             @Parameter(description = "The slug of the project to get stats for.")
             @Pattern(regexp = Project.PATTERN)

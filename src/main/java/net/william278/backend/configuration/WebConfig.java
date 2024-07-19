@@ -22,31 +22,28 @@
  * SOFTWARE.
  */
 
-package net.william278.backend.controller;
+package net.william278.backend.configuration;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-import java.net.URI;
+@EnableWebMvc
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
 
-// Redirect to the API documentation
-@Controller
-public class RootController {
+    private final AppConfiguration config;
 
-    @GetMapping({"/", "/docs"})
-    public ResponseEntity<?> redirectToDocs() {
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create("docs/"))
-                .build();
+    public WebConfig(AppConfiguration config) {
+        this.config = config;
     }
 
-    @GetMapping({"/login"})
-    public ResponseEntity<?> redirectToLogin() {
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create("oauth2/authorization/discord"))
-                .build();
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins(config.getFrontendBaseUrl().toString())
+                .allowCredentials(true);
     }
 
 }

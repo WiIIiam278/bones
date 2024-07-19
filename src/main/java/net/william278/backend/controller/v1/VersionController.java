@@ -58,8 +58,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-import static net.william278.backend.controller.RootController.CORS_FRONTEND_ORIGIN;
-
 @RestController
 @Tags(value = @Tag(name = "Project Versions"))
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -294,10 +292,7 @@ public class VersionController {
             produces = {MediaType.APPLICATION_JSON_VALUE},
             consumes = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin(
-            allowCredentials = "true", originPatterns = {CORS_FRONTEND_ORIGIN},
-            methods = {RequestMethod.POST}
-    )
+    @CrossOrigin
     public VersionImportRequest importGitHubVersions(
             @AuthenticationPrincipal User principal,
 
