@@ -48,6 +48,7 @@ public class CsrfTokenHeaderRequestHandler implements CsrfTokenRequestHandler {
         request.setAttribute(CsrfToken.class.getName(), csrfToken);
         String csrfAttrName = csrfToken.getParameterName();
         request.setAttribute(csrfAttrName, csrfToken);
+        log.warn("expected: {}, csrfAttrName: {}", csrfToken.getToken(), csrfAttrName);
     }
 
     @Override
