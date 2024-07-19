@@ -34,7 +34,7 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class WebConfig implements WebMvcConfigurer {
 
     protected static final String[] ALLOWED_CORS_METHODS = {"GET", "POST", "PUT", "DELETE"};
-    protected static final String[] ALLOWED_CORS_HEADERS = {"Cookie", "Content-Type", "X-Xsrf-Token"};
+    protected static final String[] ALLOWED_CORS_HEADERS = {"Cookie", "Content-Type", "X-XSRF-TOKEN"};
 
     private final AppConfiguration config;
 
