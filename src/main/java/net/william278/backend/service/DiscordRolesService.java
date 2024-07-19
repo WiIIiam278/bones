@@ -43,6 +43,7 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -81,8 +82,8 @@ public class DiscordRolesService {
             final DiscordMember member = mapper.readValue(body, DiscordMember.class);
 
             // Get linked projects and update
-            final List<Project> linkedProjects = getLinkedProjects(member.roles());
-            if (user.setPurchases(linkedProjects)) {
+            final Set<Project> linkedProjects = getLinkedProjects(member.roles());
+            if (user.addPurchases(linkedProjects)) {
                 log.info("Updated roles for user {} to {}", user.getId(), user.getPurchases());
                 users.save(user);
             }
@@ -92,12 +93,12 @@ public class DiscordRolesService {
     }
 
     @NotNull
-    private List<Project> getLinkedProjects(@NotNull List<String> roles) {
+    private Set<Project> getLinkedProjects(@NotNull List<String> roles) {
         final Map<String, Project> projectRoles = getProjectRoles();
         return roles.stream()
                 .filter(projectRoles::containsKey)
                 .map(projectRoles::get)
-                .toList();
+                .collect(Collectors.toSet());
     }
 
     @NotNull

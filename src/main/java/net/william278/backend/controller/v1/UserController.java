@@ -47,8 +47,9 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @Tags(value = @Tag(name = "Users"))
@@ -239,11 +240,12 @@ public class UserController {
         final User user = users.findById(userId).orElseThrow(UserNotFound::new);
 
         // Get the projects from the project repository
-        final List<Project> projectList = new ArrayList<>();
-        this.projects.findAllById(projects).forEach(projectList::add);
-        user.setPurchases(projectList);
-
-        return users.save(user);
+        final Set<Project> updatedProjects = new HashSet<>();
+        this.projects.findAllById(projects).forEach(updatedProjects::add);
+        if (user.setPurchases(updatedProjects)) {
+            return users.save(user);
+        }
+        return user;
     }
 
     @Operation(

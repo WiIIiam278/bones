@@ -114,7 +114,13 @@ public class User implements OAuth2User {
         return purchases.stream().map(Project::getSlug).collect(Collectors.toSet());
     }
 
-    public boolean setPurchases(@NotNull List<Project> purchases) {
+    public boolean setPurchases(@NotNull Set<Project> purchases) {
+        boolean changed = !this.purchases.equals(purchases);
+        this.purchases = Set.copyOf(purchases);
+        return changed;
+    }
+
+    public boolean addPurchases(@NotNull Set<Project> purchases) {
         return this.purchases.addAll(purchases);
     }
 
