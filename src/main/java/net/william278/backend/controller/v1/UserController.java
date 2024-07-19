@@ -171,7 +171,6 @@ public class UserController {
             value = "/v1/users/{userId}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
     public User deleteUser(
             @AuthenticationPrincipal User principal,
 
@@ -223,7 +222,6 @@ public class UserController {
             produces = {MediaType.APPLICATION_JSON_VALUE},
             consumes = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
     public User setUserPurchases(
             @AuthenticationPrincipal User principal,
 
@@ -292,7 +290,6 @@ public class UserController {
             value = "/v1/users/@me",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
     public User deleteLoggedInUser(
             @AuthenticationPrincipal User principal
     ) {

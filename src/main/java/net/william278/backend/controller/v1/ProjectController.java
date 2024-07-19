@@ -121,7 +121,6 @@ public class ProjectController {
             value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
     public Project putProject(
             @AuthenticationPrincipal User principal,
 
@@ -171,7 +170,6 @@ public class ProjectController {
             value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
     public Project deleteProject(
             @AuthenticationPrincipal User principal,
 

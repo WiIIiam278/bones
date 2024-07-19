@@ -214,7 +214,6 @@ public class VersionController {
                     + "}/channels/{channelName:" + Channel.PATTERN + "}/versions",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
     public Version postVersion(
             @RequestHeader(API_KEY_HEADER) String secretKey,
 
@@ -292,7 +291,6 @@ public class VersionController {
             produces = {MediaType.APPLICATION_JSON_VALUE},
             consumes = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
     public VersionImportRequest importGitHubVersions(
             @AuthenticationPrincipal User principal,
 
