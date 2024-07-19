@@ -42,6 +42,7 @@ import java.nio.file.Path;
 public class AppConfiguration {
 
     private String defaultAdminDiscordId;
+    private String cookieDomain;
 
     private URL apiBaseUrl;
     private URL frontendBaseUrl;

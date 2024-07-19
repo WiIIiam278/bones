@@ -65,6 +65,7 @@ public class DiscordOAuthConfiguration {
                     cors.setAllowedOrigins(List.of(config.getFrontendBaseUrl().toString()));
                     cors.setAllowedMethods(List.of(ALLOWED_CORS_METHODS));
                     cors.setAllowedHeaders(List.of(ALLOWED_CORS_HEADERS));
+
                     final UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
                     source.registerCorsConfiguration("/**", cors);
                     c.configurationSource(source);
@@ -73,7 +74,10 @@ public class DiscordOAuthConfiguration {
                     final CsrfTokenRequestAttributeHandler handler = new CsrfTokenRequestAttributeHandler();
                     handler.setCsrfRequestAttributeName(null); // https://stackoverflow.com/a/75047103
                     c.csrfTokenRequestHandler(handler);
-                    c.csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse());
+
+                    final CookieCsrfTokenRepository repo = new CookieCsrfTokenRepository();
+                    repo.setCookieCustomizer(cookie -> cookie.domain(config.getCookieDomain()).build());
+                    c.csrfTokenRepository(repo);
                 })
                 .oauth2Login(a -> {
                     a.loginPage("/oauth2/authorization/discord");

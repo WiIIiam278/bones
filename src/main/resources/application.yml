@@ -79,6 +79,7 @@ app:
   modrinth-api-token: ${MODRINTH_API_KEY}
   github-api-token: ${GITHUB_API_KEY}
   discord-guild-id: ${DISCORD_GUILD_ID}
+  cookie-domain: ${COOKIE_DOMAIN}
 
 # Provide OpenAPI docs
 springdoc:
