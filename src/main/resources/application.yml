@@ -96,6 +96,7 @@ server:
   error:
     whitelabel:
       enabled: false
+  port: ${PORT}
 
 # Debug
 logging:
