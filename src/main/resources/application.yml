@@ -58,7 +58,7 @@ spring:
               - identify
               - email
               - guilds.members.read
-            redirect-uri: '{baseUrl}/login/oauth2/code/discord'
+            redirect-uri: '${API_BASE_URL}/login/oauth2/code/discord'
             clientName: 'William278.net backend'
         provider:
           discord:
