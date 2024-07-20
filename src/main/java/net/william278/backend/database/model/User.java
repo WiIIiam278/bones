@@ -38,10 +38,7 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 
 import java.net.URI;
 import java.time.Instant;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Data
@@ -83,14 +80,17 @@ public class User implements OAuth2User {
     @Nullable
     private String avatar;
 
+    @JsonIgnore
     @Builder.Default
-    @Schema(
-            name = "admin",
-            description = "Whether the user is an administrator"
-    )
     @Getter(AccessLevel.NONE)
     private Boolean admin = false;
 
+    @JsonIgnore
+    @Builder.Default
+    @Getter(AccessLevel.NONE)
+    private Boolean staff = false;
+
+    @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "purchases",
@@ -99,7 +99,7 @@ public class User implements OAuth2User {
     )
     @Setter(AccessLevel.NONE)
     @JsonIgnore
-    private Set<Project> purchases;
+    private Set<Project> purchases = new HashSet<>();
 
     @SuppressWarnings("unused")
     @JsonSerialize
@@ -116,7 +116,7 @@ public class User implements OAuth2User {
 
     public boolean setPurchases(@NotNull Set<Project> purchases) {
         boolean changed = !this.purchases.equals(purchases);
-        this.purchases = Set.copyOf(purchases);
+        this.purchases = new HashSet<>(purchases);
         return changed;
     }
 
@@ -139,8 +139,22 @@ public class User implements OAuth2User {
         return URI.create("%s/avatars/%s/%s.png".formatted(CDN_URL, id, avatar));
     }
 
+    @JsonSerialize
+    @Schema(
+            name = "admin",
+            description = "Whether the user is an administrator"
+    )
     public boolean isAdmin() {
         return admin != null && admin;
+    }
+
+    @JsonSerialize
+    @Schema(
+            name = "staff",
+            description = "Whether the user is a staff member"
+    )
+    public boolean isStaff() {
+        return isAdmin() || staff != null && staff;
     }
 
     public boolean hasProjectPermission(@NotNull Project project) {
