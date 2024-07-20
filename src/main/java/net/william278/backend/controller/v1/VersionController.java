@@ -42,17 +42,20 @@ import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.database.repository.VersionRepository;
 import net.william278.backend.exception.*;
 import net.william278.backend.service.GitHubImportService;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.security.MessageDigest;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -199,7 +202,10 @@ public class VersionController {
 
     @Operation(
             summary = "Create a new version.",
-            security = @SecurityRequirement(name = "Secret Key")
+            security = {
+                    @SecurityRequirement(name = "Secret Key"),
+                    @SecurityRequirement(name = "OAuth2")
+            }
     )
     @ApiResponse(
             responseCode = "200",
@@ -216,7 +222,8 @@ public class VersionController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     public Version postVersion(
-            @RequestHeader(API_KEY_HEADER) String secretKey,
+            @RequestHeader(value = API_KEY_HEADER, required = false) String secretKey,
+            @AuthenticationPrincipal @Nullable User principal,
 
             @Parameter(description = "The slug of the project to create a version for.")
             @Pattern(regexp = Project.PATTERN)
@@ -229,7 +236,14 @@ public class VersionController {
             @RequestBody Version version,
             @RequestParam("files") MultipartFile[] files
     ) {
-        if (!config.getApiSecret().equals(secretKey)) {
+        if (principal != null) {
+            if (!principal.isAdmin()) {
+                throw new NoPermission();
+            }
+        } else if ((config.getApiSecret() != null && secretKey != null) && !MessageDigest
+                .isEqual(Utf8.encode(config.getApiSecret()), Utf8.encode(secretKey))) {
+            throw new NotAuthenticated();
+        } else {
             throw new NotAuthenticated();
         }
         final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
