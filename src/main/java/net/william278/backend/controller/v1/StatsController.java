@@ -124,7 +124,7 @@ public class StatsController {
     // Get the stats from all services
     @NotNull
     private Stats getStatsNow(@NotNull Project project) {
-        return Stream.of(github, modrinth, spigot, polymart,  hangar)
+        return Stream.of(github, modrinth, spigot, polymart, hangar)
                 .map((service) -> service.getStats(project))
                 .filter(Optional::isPresent).map(Optional::get)
                 .reduce(Stats::combine)
@@ -181,7 +181,7 @@ public class StatsController {
             return new Stats(
                     this.downloadCount + other.downloadCount,
                     (this.averageRating * this.numberOfRatings + other.averageRating * other.numberOfRatings)
-                    / (this.numberOfRatings + other.numberOfRatings),
+                    / Math.max(this.numberOfRatings + other.numberOfRatings, 1),
                     this.numberOfRatings + other.numberOfRatings,
                     this.interactions + other.interactions
             );
