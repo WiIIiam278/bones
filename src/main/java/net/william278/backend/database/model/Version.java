@@ -100,6 +100,12 @@ public class Version {
     @OneToMany
     private List<Download> downloads;
 
+    @Schema(
+            name = "downloadCount",
+            description = "The number of times this download has been accessed."
+    )
+    private long downloadCount;
+
     @JsonIgnore
     public boolean isRestricted() {
         return project.isRestricted();
@@ -113,6 +119,10 @@ public class Version {
     @JsonIgnore
     public List<Distribution> getDistributions() {
         return downloads.stream().map(Download::getDistribution).toList();
+    }
+
+    public void incrementDownloadCount() {
+        downloadCount++;
     }
 
     public boolean hasDistribution(@NotNull Distribution distribution) {

@@ -48,6 +48,8 @@ public interface VersionRepository extends JpaRepository<Version, Integer> {
     @NotNull
     List<Version> getAllByProject(@NotNull Project project);
 
+    long getTotalDownloadCountByProject(@NotNull Project project);
+
     @NotNull
     Page<Version> getAllByProjectAndChannelOrderByTimestampDesc(@NotNull Project project, @NotNull Channel channel,
                                                                 @NotNull PageRequest pageRequest);

@@ -53,6 +53,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @Tags(value = @Tag(name = "Downloads"))
@@ -161,11 +162,19 @@ public class DownloadController {
             }
         }
 
+        // Increment the download count for the version
+        CompletableFuture.runAsync(() -> incrementVersionDownloads(version));
+
         try {
             return new DownloadArchive(version.getDownloadPathFor(distribution, this.configuration), CACHE);
         } catch (Throwable e) {
             throw new DownloadFailed();
         }
+    }
+
+    private void incrementVersionDownloads(@NotNull Version version) {
+        version.incrementDownloadCount();
+        versions.save(version);
     }
 
     private static class DownloadArchive extends ResponseEntity<FileSystemResource> {
