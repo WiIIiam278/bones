@@ -136,10 +136,12 @@ public class User implements OAuth2User {
         return URI.create("%s/avatars/%s/%s.png".formatted(CDN_URL, id, avatar));
     }
 
+    @JsonIgnore
     public boolean isAdmin() {
         return role.isAtLeast(Role.ADMIN);
     }
 
+    @JsonIgnore
     public boolean isStaff() {
         return role.isAtLeast(Role.STAFF);
     }
@@ -182,10 +184,17 @@ public class User implements OAuth2User {
         @Schema(description = "A user with administrative permissions")
         ADMIN(200);
 
+        @JsonIgnore
         private final int weight;
 
         public boolean isAtLeast(@NotNull Role role) {
             return this.weight >= role.weight;
+        }
+
+        public static Optional<Role> findByName(@NotNull String name) {
+            return Arrays.stream(values())
+                    .filter(role -> role.name().equals(name.toUpperCase(Locale.ROOT)))
+                    .findFirst();
         }
     }
 

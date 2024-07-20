@@ -96,6 +96,12 @@ class Advice {
         return this.error(HttpStatus.NOT_FOUND, "Endpoint not found.");
     }
 
+    @ExceptionHandler(InvalidRole.class)
+    @ResponseBody
+    public ResponseEntity<?> invalidRole(final InvalidRole exception) {
+        return this.error(HttpStatus.BAD_REQUEST, "Invalid role.");
+    }
+
     @ExceptionHandler(NotAuthenticated.class)
     @ResponseBody
     public ResponseEntity<?> notAuthenticated(final NotAuthenticated exception) {

@@ -36,10 +36,7 @@ import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.database.repository.UsersRepository;
-import net.william278.backend.exception.ErrorResponse;
-import net.william278.backend.exception.NoPermission;
-import net.william278.backend.exception.NotAuthenticated;
-import net.william278.backend.exception.UserNotFound;
+import net.william278.backend.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -282,7 +279,7 @@ public class UserController {
             @Parameter(description = "The ID of the user to get.")
             @PathVariable String userId,
 
-            @RequestBody User.Role role
+            @RequestBody String roleName
     ) {
         if (principal == null) {
             throw new NotAuthenticated();
@@ -292,6 +289,7 @@ public class UserController {
         }
 
         // Prevent self- or illegal-updates
+        final User.Role role = User.Role.findByName(roleName).orElseThrow(InvalidRole::new);
         final User user = users.findById(userId).orElseThrow(UserNotFound::new);
         if (user.equals(principal) || user.isAdmin()) {
             throw new NoPermission();
