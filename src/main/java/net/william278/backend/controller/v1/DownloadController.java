@@ -139,11 +139,11 @@ public class DownloadController {
             @Pattern(regexp = Version.PATTERN)
             @PathVariable String versionName
     ) {
-        final Project project = this.projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
-        final Channel channel = this.channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
-        final Version version = this.versions.findByProjectAndChannelAndName(project, channel, versionName)
+        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
+        final Channel channel = channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
+        final Version version = versions.findByProjectAndChannelAndName(project, channel, versionName)
                 .orElseThrow(VersionNotFound::new);
-        final Distribution distribution = this.distributions.findDistributionByName(distributionName)
+        final Distribution distribution = distributions.findDistributionByNameAndProject(distributionName, project)
                 .orElseThrow(DistributionNotFound::new);
 
         // Check the version has this distribution

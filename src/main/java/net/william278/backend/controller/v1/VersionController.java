@@ -143,7 +143,8 @@ public class VersionController {
     ) {
         final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
         final Channel channel = channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
-        final Distribution distribution = distributions.findDistributionByName(distributionName).orElseThrow(DistributionNotFound::new);
+        final Distribution distribution = distributions.findDistributionByNameAndProject(distributionName, project)
+                .orElseThrow(DistributionNotFound::new);
 
         return versions.getAllByProjectAndChannelAndDownloadsDistributionOrderByTimestampDesc(
                 project, channel, distribution, PageRequest.of(page, size)

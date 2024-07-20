@@ -145,7 +145,7 @@ public class GitHubImportService {
                 log.warn("No distribution matcher found for asset {}", asset.getName());
                 return Optional.empty();
             }
-            final Distribution distribution = distributions.findDistributionByName(distro.get().getName())
+            final Distribution distribution = distributions.findDistributionByNameAndProject(distro.get().getName(), project)
                     .orElseGet(() -> {
                         distro.get().setProject(project);
                         return distributions.save(distro.get());

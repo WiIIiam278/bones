@@ -39,7 +39,7 @@ public interface DistributionRepository extends CrudRepository<Distribution, Int
     Optional<Distribution> findById(@NotNull Integer id);
 
     @NotNull
-    Optional<Distribution> findDistributionByName(@NotNull String name);
+    Optional<Distribution> findDistributionByNameAndProject(@NotNull String name, @NotNull Project project);
 
     @NotNull
     List<Distribution> findDistributionsByProject(@NotNull Project project);
