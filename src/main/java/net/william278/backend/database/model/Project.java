@@ -70,7 +70,6 @@ public class Project implements Comparable<Project> {
     private boolean restricted;
 
     @JsonIgnore
-    @Setter(AccessLevel.NONE)
     @Getter(AccessLevel.NONE)
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
