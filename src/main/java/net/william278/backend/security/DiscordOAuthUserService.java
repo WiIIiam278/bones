@@ -100,7 +100,7 @@ public class DiscordOAuthUserService extends DefaultOAuth2UserService {
                 .createdAt(Instant.now())
                 .email(oAuth2User.getAttribute("email"))
                 .avatar(oAuth2User.getAttribute("avatar"))
-                .admin(isAdmin)
+                .role(isAdmin ? User.Role.ADMIN : User.Role.USER)
                 .purchases(new HashSet<>())
                 .build();
     }

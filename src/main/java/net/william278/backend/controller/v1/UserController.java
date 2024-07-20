@@ -210,7 +210,7 @@ public class UserController {
     )
     @ApiResponse(
             responseCode = "403",
-            description = "The user is not an admin.",
+            description = "The user is not a staff member or admin.",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @ApiResponse(
@@ -234,7 +234,7 @@ public class UserController {
         if (principal == null) {
             throw new NotAuthenticated();
         }
-        if (!principal.isAdmin()) {
+        if (!principal.isStaff()) {
             throw new NoPermission();
         }
         final User user = users.findById(userId).orElseThrow(UserNotFound::new);
@@ -246,6 +246,60 @@ public class UserController {
             return users.save(user);
         }
         return user;
+    }
+
+    @Operation(
+            summary = "Set the role of a user.",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The user with their updated permission flags"
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user is not an admin.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The user was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @PutMapping(
+            value = "/v1/users/{userId}/role",
+            produces = {MediaType.APPLICATION_JSON_VALUE},
+            consumes = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public User setUserRole(
+            @AuthenticationPrincipal User principal,
+
+            @Parameter(description = "The ID of the user to get.")
+            @PathVariable String userId,
+
+            @RequestBody User.Role role
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        if (!principal.isAdmin()) {
+            throw new NoPermission();
+        }
+
+        // Prevent self- or illegal-updates
+        final User user = users.findById(userId).orElseThrow(UserNotFound::new);
+        if (user.equals(principal) || user.isAdmin()) {
+            throw new NoPermission();
+        }
+
+        // Set the role & save
+        user.setRole(role);
+        return users.save(user);
     }
 
     @Operation(

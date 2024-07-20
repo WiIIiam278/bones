@@ -80,15 +80,12 @@ public class User implements OAuth2User {
     @Nullable
     private String avatar;
 
-    @JsonIgnore
+    @Schema(
+            name = "role",
+            description = "The user's role"
+    )
     @Builder.Default
-    @Getter(AccessLevel.NONE)
-    private Boolean admin = false;
-
-    @JsonIgnore
-    @Builder.Default
-    @Getter(AccessLevel.NONE)
-    private Boolean staff = false;
+    private Role role = Role.USER;
 
     @Builder.Default
     @ManyToMany(fetch = FetchType.EAGER)
@@ -139,26 +136,16 @@ public class User implements OAuth2User {
         return URI.create("%s/avatars/%s/%s.png".formatted(CDN_URL, id, avatar));
     }
 
-    @JsonSerialize
-    @Schema(
-            name = "admin",
-            description = "Whether the user is an administrator"
-    )
     public boolean isAdmin() {
-        return admin != null && admin;
+        return role.isAtLeast(Role.ADMIN);
     }
 
-    @JsonSerialize
-    @Schema(
-            name = "staff",
-            description = "Whether the user is a staff member"
-    )
     public boolean isStaff() {
-        return isAdmin() || staff != null && staff;
+        return role.isAtLeast(Role.STAFF);
     }
 
     public boolean hasProjectPermission(@NotNull Project project) {
-        return admin || purchases.contains(project);
+        return isStaff() || purchases.contains(project);
     }
 
     @JsonIgnore
@@ -171,7 +158,7 @@ public class User implements OAuth2User {
                 "email", email,
                 "avatar", getAvatar(),
                 "projects", purchases,
-                "admin", admin
+                "role", role
         );
     }
 
@@ -180,6 +167,26 @@ public class User implements OAuth2User {
     @Unmodifiable
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of((GrantedAuthority) () -> "DISCORD");
+    }
+
+    @Schema(
+            name = "Role",
+            description = "Roles a user can have"
+    )
+    @AllArgsConstructor
+    public enum Role {
+        @Schema(description = "A standard user")
+        USER(0),
+        @Schema(description = "A user with staff permissions")
+        STAFF(100),
+        @Schema(description = "A user with administrative permissions")
+        ADMIN(200);
+
+        private final int weight;
+
+        public boolean isAtLeast(@NotNull Role role) {
+            return this.weight >= role.weight;
+        }
     }
 
 }
