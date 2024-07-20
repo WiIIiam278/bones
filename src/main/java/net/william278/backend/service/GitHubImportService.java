@@ -130,7 +130,9 @@ public class GitHubImportService {
         // Download from asset.getBrowserDownloadUrl() and place at getUploadPathFor() (making dirs if needed)
         final OkHttpClient client = HTTPUtils.createClient();
         final Request request = new Request.Builder()
-                .url(asset.getBrowserDownloadUrl())
+                .url(asset.getUrl())
+                .addHeader("User-Agent", "William278")
+                .addHeader("Authorization", "Bearer %s".formatted(config.getGithubApiToken()))
                 .addHeader("Accept", "application/octet-stream")
                 .build();
         final Call call = client.newCall(request);
@@ -154,7 +156,6 @@ public class GitHubImportService {
 
             // Copy the input stream to the file path
             log.info("Downloading asset {} from GitHub to {} ({}kb)", asset.getName(), path, asset.getSize() / 1024);
-            final byte[] md5 = DigestUtils.md5Digest(inputStream);
             FileUtils.copyToFile(inputStream, path.toFile());
             log.info("Downloaded asset {}!", asset.getName());
 
@@ -163,8 +164,8 @@ public class GitHubImportService {
                     .name(asset.getName())
                     .distribution(distribution)
                     .fileSize(asset.getSize())
+                    .md5(DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(path.toFile())))
                     .build();
-            download.setMd5(md5);
             return Optional.of(downloads.save(download));
         } catch (Throwable e) {
             log.warn("Exception downloading asset {} from GitHub", asset.getName(), e);
