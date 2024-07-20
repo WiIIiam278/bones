@@ -71,6 +71,7 @@ public class Project implements Comparable<Project> {
 
     @JsonIgnore
     @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.PUBLIC)
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "project_release_channels",

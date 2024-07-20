@@ -33,8 +33,10 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.validation.constraints.Pattern;
+import net.william278.backend.database.model.Channel;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.User;
+import net.william278.backend.database.repository.ChannelRepository;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,10 +52,12 @@ import java.util.List;
 public class ProjectController {
 
     private final ProjectRepository projects;
+    private final ChannelRepository channels;
 
     @Autowired
-    public ProjectController(ProjectRepository projects) {
+    public ProjectController(ProjectRepository projects, ChannelRepository channels) {
         this.projects = projects;
+        this.channels = channels;
     }
 
     @Operation(
@@ -139,7 +143,13 @@ public class ProjectController {
         if (projectSlug.isBlank() || !projectSlug.matches(Project.PATTERN)) {
             throw new InvalidProject();
         }
+
+        // Update release channels & slug
+        project.getReleaseChannels().forEach(c -> project.addReleaseChannel(
+                channels.findChannelByName(c).orElse(channels.save(new Channel(c))))
+        );
         project.setSlug(projectSlug);
+
         return projects.save(project);
     }
 
