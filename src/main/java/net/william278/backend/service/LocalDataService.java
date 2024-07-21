@@ -43,8 +43,12 @@ public class LocalDataService implements StatsService {
 
     @Override
     public Optional<StatsController.Stats> getStats(@NotNull Project project) {
+        final Integer downloadCount = versions.sumDownloadCountByProject(project);
+        if (downloadCount == null) {
+            return Optional.empty();
+        }
         return Optional.of(StatsController.Stats.builder()
-                .downloadCount(versions.getTotalDownloadCountByProject(project))
+                .downloadCount(downloadCount)
                 .build());
     }
 

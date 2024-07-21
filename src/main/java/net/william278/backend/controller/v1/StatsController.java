@@ -62,6 +62,7 @@ public class StatsController {
     private final SpigotDataService spigot;
     private final PolymartDataService polymart;
     private final HangarDataService hangar;
+    private final LocalDataService local;
     private final ProjectRepository projects;
     private final Map<String, CachedStats> cache = new HashMap<>();
 
@@ -69,12 +70,14 @@ public class StatsController {
     @SneakyThrows
     @Autowired
     public StatsController(GitHubDataService github, ModrinthDataService modrinth, SpigotDataService spigot,
-                           PolymartDataService polymart, HangarDataService hangar, ProjectRepository projects) {
+                           PolymartDataService polymart, HangarDataService hangar, LocalDataService local,
+                           ProjectRepository projects) {
         this.github = github;
         this.modrinth = modrinth;
         this.spigot = spigot;
         this.polymart = polymart;
         this.hangar = hangar;
+        this.local = local;
         this.projects = projects;
     }
 
@@ -124,7 +127,7 @@ public class StatsController {
     // Get the stats from all services
     @NotNull
     private Stats getStatsNow(@NotNull Project project) {
-        return Stream.of(github, modrinth, spigot, polymart, hangar)
+        return Stream.of(github, modrinth, spigot, polymart, hangar, local)
                 .map((service) -> service.getStats(project))
                 .filter(Optional::isPresent).map(Optional::get)
                 .reduce(Stats::combine)

@@ -32,6 +32,8 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
@@ -45,10 +47,8 @@ public interface VersionRepository extends JpaRepository<Version, Integer> {
     Optional<Version> findByProjectAndChannelAndName(@NotNull Project project, @NotNull Channel channel,
                                                      @NotNull String version);
 
-    @NotNull
-    List<Version> getAllByProject(@NotNull Project project);
-
-    long getTotalDownloadCountByProject(@NotNull Project project);
+    @Query("SELECT SUM(v.downloadCount) FROM Version v WHERE v.project = :project")
+    Integer sumDownloadCountByProject(@Param("project") Project project);
 
     @NotNull
     Page<Version> getAllByProjectAndChannelOrderByTimestampDesc(@NotNull Project project, @NotNull Channel channel,
