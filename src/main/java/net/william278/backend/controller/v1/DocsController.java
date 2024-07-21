@@ -43,6 +43,8 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @Tags(value = @Tag(name = "Project Documentation"))
 @RequestMapping(produces = MediaType.TEXT_PLAIN_VALUE)
@@ -95,7 +97,7 @@ public class DocsController {
             @PathVariable String pageSlug,
 
             @Parameter(description = "The language code of the page.")
-            @RequestParam(defaultValue = "", required = false) String langCode
+            @RequestParam(defaultValue = "", required = false) String locale
     ) {
         if (projectSlug.isBlank() || !projectSlug.matches(Project.PATTERN)) {
             throw new InvalidProject();
@@ -108,10 +110,56 @@ public class DocsController {
         }
 
         // Resolve lang code
-        if (langCode.isBlank()) {
-            langCode = config.getDefaultDocLocale();
+        if (locale.isBlank()) {
+            locale = config.getDefaultDocLocale();
         }
-        return docs.getPage(project, pageSlug, langCode).orElseThrow(DocsPageNotFound::new);
+        return docs.getPage(project, pageSlug, locale).orElseThrow(DocsPageNotFound::new);
+    }
+
+    @Operation(
+            summary = "Get a list of documentation pages for a project."
+    )
+    @ApiResponse(
+            responseCode = "200"
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project or documentation page was not found.",
+            content = @Content(
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    mediaType = MediaType.APPLICATION_JSON_VALUE
+            )
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "The project does not have documentation",
+            content = @Content(
+                    schema = @Schema(implementation = ErrorResponse.class),
+                    mediaType = MediaType.APPLICATION_JSON_VALUE
+            )
+    )
+    @GetMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN
+                    + "}/docs/{pageSlug:" + ProjectDocsService.PATTERN + "}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin("*")
+    public List<String> getProjectDocsPages(
+            @Parameter(description = "The slug of the project to get docs for.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug
+    ) {
+        if (projectSlug.isBlank() || !projectSlug.matches(Project.PATTERN)) {
+            throw new InvalidProject();
+        }
+
+        // Resolve project
+        final Project project = projects.findById(projectSlug).orElseThrow(InvalidProject::new);
+        if (!project.getMetadata().isDocumentation()) {
+            throw new UndocumentedProject();
+        }
+
+        return docs.getPages(project);
     }
 
     @Operation(

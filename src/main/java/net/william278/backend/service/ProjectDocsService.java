@@ -39,10 +39,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.util.HashMap;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Stream;
 
 @Slf4j
 @Service
@@ -62,8 +60,7 @@ public class ProjectDocsService {
         this.cloneWikis();
     }
 
-    public Optional<String> getPage(@NotNull Project project, @NotNull String langCode,
-                                    @NotNull String pageSlug) {
+    public Optional<String> getPage(@NotNull Project project, @NotNull String pageSlug, @NotNull String langCode) {
         if (!this.wikis.containsKey(project.getSlug())) {
             return Optional.empty();
         }
@@ -89,6 +86,24 @@ public class ProjectDocsService {
             log.warn("Failed to read docs page \"{}\" for project \"{}\"", pageSlug, project.getSlug(), e);
             return Optional.empty();
         }
+    }
+
+    @NotNull
+    public List<String> getPages(@NotNull Project project) {
+        if (!this.wikis.containsKey(project.getSlug())) {
+            return List.of();
+        }
+
+        // Find all files in the project's docs directory
+        final File[] files = getProjectPath(project).toFile().listFiles((dir, name) -> name.endsWith(".md"));
+        if (files == null || files.length == 0) {
+            return List.of();
+        }
+
+        // Return the file names
+        return Stream.of(files).map(File::getName).filter(s -> s.endsWith(".md"))
+                .map(s -> s.substring(0, s.length() - 3).toLowerCase(Locale.ENGLISH))
+                .sorted().toList();
     }
 
     @NotNull
