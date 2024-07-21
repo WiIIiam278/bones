@@ -26,6 +26,7 @@ package net.william278.backend.service;
 
 import lombok.extern.slf4j.Slf4j;
 import net.william278.backend.configuration.AppConfiguration;
+import net.william278.backend.controller.v1.DocsController;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.repository.ProjectRepository;
 import org.eclipse.jgit.api.Git;
@@ -34,13 +35,13 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
+
+import static net.william278.backend.controller.v1.DocsController.DocsPage.getPageName;
+import static net.william278.backend.controller.v1.DocsController.DocsPage.getPageSlug;
 
 @Slf4j
 @Service
@@ -60,7 +61,7 @@ public class ProjectDocsService {
         this.cloneWikis();
     }
 
-    public Optional<String> getPage(@NotNull Project project, @NotNull String pageSlug, @NotNull String langCode) {
+    public Optional<DocsController.DocsPage> getPage(@NotNull Project project, @NotNull String pageSlug, @NotNull String langCode) {
         if (!this.wikis.containsKey(project.getSlug())) {
             return Optional.empty();
         }
@@ -78,33 +79,29 @@ public class ProjectDocsService {
         if (file == null || file.length == 0) {
             return Optional.empty();
         }
-
-        // Read the file
-        try (InputStream stream = new FileInputStream(file[0])) {
-            return Optional.of(new String(stream.readAllBytes(), StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            log.warn("Failed to read docs page \"{}\" for project \"{}\"", pageSlug, project.getSlug(), e);
-            return Optional.empty();
-        }
+        return DocsController.DocsPage.fromFile(file[0]);
     }
 
     @NotNull
-    public List<String> getPages(@NotNull Project project) {
+    public Map<String, String> getPages(@NotNull Project project) {
         if (!this.wikis.containsKey(project.getSlug())) {
-            return List.of();
+            return Map.of();
         }
 
         // Find all files in the project's docs directory
         final File[] files = getProjectPath(project).toFile().listFiles((dir, name) -> name.endsWith(".md"));
         if (files == null || files.length == 0) {
-            return List.of();
+            return Map.of();
         }
 
         // Return the file names
-        return Stream.of(files).map(File::getName).filter(s -> s.endsWith(".md"))
-                .map(s -> s.substring(0, s.length() - 3).toLowerCase(Locale.ENGLISH))
-                .sorted().toList();
+        return Stream.of(files)
+                .filter(f -> f.getName().endsWith(".md"))
+                .collect(HashMap::new, (map, file) -> map.put(
+                        getPageSlug(file), getPageName(file)
+                ), HashMap::putAll);
     }
+
 
     @NotNull
     private Path getProjectPath(@NotNull Project project) {

@@ -39,15 +39,23 @@ import net.william278.backend.database.model.Project;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.exception.*;
 import net.william278.backend.service.ProjectDocsService;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @Tags(value = @Tag(name = "Project Documentation"))
-@RequestMapping(produces = MediaType.TEXT_PLAIN_VALUE)
+@RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 public class DocsController {
 
     private final ProjectRepository projects;
@@ -69,26 +77,20 @@ public class DocsController {
     @ApiResponse(
             responseCode = "404",
             description = "The project or documentation page was not found.",
-            content = @Content(
-                    schema = @Schema(implementation = ErrorResponse.class),
-                    mediaType = MediaType.APPLICATION_JSON_VALUE
-            )
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @ApiResponse(
             responseCode = "400",
             description = "The project does not have documentation",
-            content = @Content(
-                    schema = @Schema(implementation = ErrorResponse.class),
-                    mediaType = MediaType.APPLICATION_JSON_VALUE
-            )
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @GetMapping(
             value = "/v1/projects/{projectSlug:" + Project.PATTERN
                     + "}/docs/{pageSlug:" + ProjectDocsService.PATTERN + "}",
-            produces = {MediaType.TEXT_PLAIN_VALUE}
+            produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @CrossOrigin("*")
-    public String getProjectDocsPage(
+    public DocsPage getProjectDocsPage(
             @Parameter(description = "The slug of the project to get docs for.")
             @Pattern(regexp = Project.PATTERN)
             @PathVariable String projectSlug,
@@ -120,31 +122,25 @@ public class DocsController {
             summary = "Get a list of documentation pages for a project."
     )
     @ApiResponse(
-            responseCode = "200"
+            responseCode = "200",
+            description = "A map of page slugs to page titles."
     )
     @ApiResponse(
             responseCode = "404",
             description = "The project or documentation page was not found.",
-            content = @Content(
-                    schema = @Schema(implementation = ErrorResponse.class),
-                    mediaType = MediaType.APPLICATION_JSON_VALUE
-            )
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @ApiResponse(
             responseCode = "400",
             description = "The project does not have documentation",
-            content = @Content(
-                    schema = @Schema(implementation = ErrorResponse.class),
-                    mediaType = MediaType.APPLICATION_JSON_VALUE
-            )
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @GetMapping(
-            value = "/v1/projects/{projectSlug:" + Project.PATTERN
-                    + "}/docs/{pageSlug:" + ProjectDocsService.PATTERN + "}",
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}/docs",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @CrossOrigin("*")
-    public List<String> getProjectDocsPages(
+    public Map<String, String> getProjectDocsPages(
             @Parameter(description = "The slug of the project to get docs for.")
             @Pattern(regexp = Project.PATTERN)
             @PathVariable String projectSlug
@@ -174,34 +170,22 @@ public class DocsController {
     @ApiResponse(
             responseCode = "404",
             description = "The project was not found.",
-            content = @Content(
-                    schema = @Schema(implementation = ErrorResponse.class),
-                    mediaType = MediaType.APPLICATION_JSON_VALUE
-            )
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @ApiResponse(
             responseCode = "400",
             description = "The project does not have documentation",
-            content = @Content(
-                    schema = @Schema(implementation = ErrorResponse.class),
-                    mediaType = MediaType.APPLICATION_JSON_VALUE
-            )
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @ApiResponse(
             responseCode = "403",
             description = "The secret hash is incorrect.",
-            content = @Content(
-                    schema = @Schema(implementation = ErrorResponse.class),
-                    mediaType = MediaType.APPLICATION_JSON_VALUE
-            )
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @ApiResponse(
             responseCode = "401",
             description = "The secret hash was not provided",
-            content = @Content(
-                    schema = @Schema(implementation = ErrorResponse.class),
-                    mediaType = MediaType.APPLICATION_JSON_VALUE
-            )
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @PostMapping(
             value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}/docs"
@@ -227,4 +211,50 @@ public class DocsController {
         throw new FailedToUpdateDocs();
     }
 
+    @Schema(
+            name = "DocsPage",
+            description = "A documentation page"
+    )
+    public record DocsPage(
+            @Schema(
+                    description = "The slug of the page",
+                    example = "example-page",
+                    pattern = ProjectDocsService.PATTERN
+            )
+            @NotNull String slug,
+            @Schema(
+                    description = "The title of the page",
+                    example = "Example Page"
+            )
+            @NotNull String title,
+            @Schema(
+                    description = "The markdown content of the page",
+                    example = "This is an example page"
+            )
+            @NotNull String content
+    ) {
+
+        public static Optional<DocsPage> fromFile(@NotNull File doc) {
+            try (InputStream stream = new FileInputStream(doc)) {
+                return Optional.of(new DocsPage(
+                        getPageSlug(doc),
+                        getPageName(doc),
+                        new String(stream.readAllBytes(), StandardCharsets.UTF_8)
+                ));
+            } catch (IOException e) {
+                return Optional.empty();
+            }
+        }
+
+        @NotNull
+        public static String getPageName(@NotNull File file) {
+            return file.getName().replaceAll("\\.md$", "").replaceAll("-", " ");
+        }
+
+        @NotNull
+        public static String getPageSlug(@NotNull File file) {
+            return file.getName().toLowerCase(Locale.ENGLISH).replaceAll("\\.md$", "");
+        }
+
+    }
 }
