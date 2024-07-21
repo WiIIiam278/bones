@@ -24,39 +24,16 @@
 
 package net.william278.backend.configuration;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
+import am.ik.webhook.spring.WebhookVerifierRequestBodyAdvice;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 
-import java.net.URL;
-import java.nio.file.Path;
+@Configuration
+public class WebConfiguration {
 
-@Setter
-@Getter
-@NoArgsConstructor
-@ConfigurationProperties(prefix = "app")
-@Validated
-public class AppConfiguration {
-
-    private String defaultAdminDiscordId;
-    private String cookieDomain;
-
-    private URL apiBaseUrl;
-    private URL frontendBaseUrl;
-
-    private String apiTitle;
-    private String apiVersion;
-    private String apiSecret;
-
-    private @NotNull Path storagePath;
-    private @NotNull Path docsPath;
-
-    private String modrinthApiToken;
-    private String githubApiToken;
-    private String githubWebhookSecret;
-    private String discordGuildId;
+    @Bean
+    public WebhookVerifierRequestBodyAdvice webhookVerifierRequestBodyAdvice(AppConfiguration config) {
+        return WebhookVerifierRequestBodyAdvice.githubSha256(config.getGithubWebhookSecret());
+    }
 
 }

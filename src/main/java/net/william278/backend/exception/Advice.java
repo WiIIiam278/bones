@@ -78,6 +78,18 @@ class Advice {
         return this.error(HttpStatus.NOT_FOUND, "Project not found.");
     }
 
+    @ExceptionHandler(DocsPageNotFound.class)
+    @ResponseBody
+    public ResponseEntity<?> docsPageNotFound(final DocsPageNotFound exception) {
+        return this.error(HttpStatus.NOT_FOUND, "Docs page not found.");
+    }
+
+    @ExceptionHandler(FailedToUpdateDocs.class)
+    @ResponseBody
+    public ResponseEntity<?> failedToUpdateDocs(final FailedToUpdateDocs exception) {
+        return this.error(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update docs.");
+    }
+
     @ExceptionHandler(VersionNotFound.class)
     @ResponseBody
     public ResponseEntity<?> versionNotFound(final VersionNotFound exception) {
@@ -100,6 +112,12 @@ class Advice {
     @ResponseBody
     public ResponseEntity<?> invalidRole(final InvalidRole exception) {
         return this.error(HttpStatus.BAD_REQUEST, "Invalid role.");
+    }
+
+    @ExceptionHandler(UndocumentedProject.class)
+    @ResponseBody
+    public ResponseEntity<?> undocumentedProject(final UndocumentedProject exception) {
+        return this.error(HttpStatus.BAD_REQUEST, "Project does not have documentation.");
     }
 
     @ExceptionHandler(NotAuthenticated.class)

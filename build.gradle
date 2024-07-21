@@ -36,11 +36,15 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
     implementation 'com.mysql:mysql-connector-j'
+    implementation 'am.ik.webhook:webhook-verifier:0.1.2'
 
     // Statistics clients
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'org.kohsuke:github-api:1.323'
     implementation 'dev.masecla:Modrinth4J:2.0.0'
+
+    // Git
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'

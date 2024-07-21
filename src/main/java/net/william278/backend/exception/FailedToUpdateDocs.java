@@ -22,41 +22,13 @@
  * SOFTWARE.
  */
 
-package net.william278.backend.configuration;
+package net.william278.backend.exception;
 
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
-import org.jetbrains.annotations.NotNull;
-import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.validation.annotation.Validated;
+import java.io.Serial;
 
-import java.net.URL;
-import java.nio.file.Path;
+public class FailedToUpdateDocs extends RuntimeException {
 
-@Setter
-@Getter
-@NoArgsConstructor
-@ConfigurationProperties(prefix = "app")
-@Validated
-public class AppConfiguration {
-
-    private String defaultAdminDiscordId;
-    private String cookieDomain;
-
-    private URL apiBaseUrl;
-    private URL frontendBaseUrl;
-
-    private String apiTitle;
-    private String apiVersion;
-    private String apiSecret;
-
-    private @NotNull Path storagePath;
-    private @NotNull Path docsPath;
-
-    private String modrinthApiToken;
-    private String githubApiToken;
-    private String githubWebhookSecret;
-    private String discordGuildId;
+    @Serial
+    private static final long serialVersionUID = 345643856123L;
 
 }

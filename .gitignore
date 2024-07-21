@@ -39,6 +39,8 @@ out/
 ### Environment ###
 .env
 
-### Package Files ###
-downloads/
+### Dynamic Conent ###
+downloads/**
+docs/**
 *.jar
+*.md

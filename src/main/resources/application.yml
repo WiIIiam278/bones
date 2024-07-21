@@ -72,6 +72,7 @@ app:
   api-base-url: ${API_BASE_URL}
   api-title: ${API_TITLE}
   storage-path: ${STORAGE_PATH}
+  docs-path: ${DOCS_PATH}
   api-version: ${API_VERSION}
   frontend-base-url: ${FRONTEND_BASE_URL}
   api-secret: ${API_SECRET}
@@ -80,6 +81,7 @@ app:
   github-api-token: ${GITHUB_API_KEY}
   discord-guild-id: ${DISCORD_GUILD_ID}
   cookie-domain: ${COOKIE_DOMAIN}
+  github-webhook-secret: ${GITHUB_WEBHOOK_SECRET}
 
 # Provide OpenAPI docs
 springdoc:
