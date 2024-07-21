@@ -46,6 +46,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @Tags(value = @Tag(name = "Projects"))
@@ -148,13 +149,15 @@ public class ProjectController {
         }
 
         // Update release channels
-        project.getReleaseChannels().forEach(c -> project.addReleaseChannel(
-                channels.findChannelByName(c).orElse(channels.save(new Channel(c))))
-        );
+        projects.findById(project.getSlug()).ifPresent(ex -> project.setReleaseChannels(ex.getReleaseChannels()
+                .stream().map(r -> channels.findChannelByName(r).orElse(channels.save(new Channel(r))))
+                .collect(Collectors.toSet())));
 
         // Update README
         if (project.getMetadata().isPullReadmeFromGithub()) {
-            project.getMetadata().setReadmeBody(github.getReadme(project).orElse(null));
+            final Project.Metadata metadata = project.getMetadata();
+            github.getReadme(project).ifPresent(metadata::setReadmeBody);
+            project.setMetadata(metadata);
         }
 
         project.setSlug(projectSlug);

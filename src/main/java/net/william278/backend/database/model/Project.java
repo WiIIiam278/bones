@@ -130,6 +130,7 @@ public class Project implements Comparable<Project> {
             description = "Metadata for a project."
     )
     @Getter
+    @Setter
     @Builder
     @AllArgsConstructor
     @NoArgsConstructor
@@ -189,8 +190,7 @@ public class Project implements Comparable<Project> {
                 description = "README body text. Note that if pullReadmeFromGithub is true, this will be overwritten.",
                 example = "HuskHomes is a lightweight, fast and feature-rich homes plugin. (...)"
         )
-        @Builder.Default
-        @Setter
+        @Nullable
         private String readmeBody = null;
 
         @Schema(
@@ -215,7 +215,6 @@ public class Project implements Comparable<Project> {
                 requiredMode = Schema.RequiredMode.NOT_REQUIRED
         )
         @Nullable
-        @Builder.Default
         private BigDecimal suggestedRetailPrice = null;
 
         @Schema(
