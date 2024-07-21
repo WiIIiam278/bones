@@ -46,6 +46,7 @@ public class AppConfiguration {
 
     private URL apiBaseUrl;
     private URL frontendBaseUrl;
+    private String defaultDocLocale;
 
     private String apiTitle;
     private String apiVersion;

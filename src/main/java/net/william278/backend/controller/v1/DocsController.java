@@ -34,6 +34,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.validation.constraints.Pattern;
+import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.exception.*;
@@ -49,10 +50,12 @@ public class DocsController {
 
     private final ProjectRepository projects;
     private final ProjectDocsService docs;
+    private final AppConfiguration config;
 
-    public DocsController(ProjectRepository projects, ProjectDocsService docs) {
+    public DocsController(ProjectRepository projects, ProjectDocsService docs, AppConfiguration config) {
         this.projects = projects;
         this.docs = docs;
+        this.config = config;
     }
 
     @Operation(
@@ -89,21 +92,30 @@ public class DocsController {
             @PathVariable String projectSlug,
 
             @Parameter(description = "The slug of the docs page.")
-            @PathVariable String pageSlug
+            @PathVariable String pageSlug,
+
+            @Parameter(description = "The language code of the page.")
+            @RequestParam(defaultValue = "", required = false) String langCode
     ) {
         if (projectSlug.isBlank() || !projectSlug.matches(Project.PATTERN)) {
             throw new InvalidProject();
         }
+
+        // Resolve project
         final Project project = projects.findById(projectSlug).orElseThrow(InvalidProject::new);
         if (!project.getMetadata().isDocumentation()) {
             throw new UndocumentedProject();
         }
 
-        return docs.getPage(project, pageSlug).orElseThrow(DocsPageNotFound::new);
+        // Resolve lang code
+        if (langCode.isBlank()) {
+            langCode = config.getDefaultDocLocale();
+        }
+        return docs.getPage(project, pageSlug, langCode).orElseThrow(DocsPageNotFound::new);
     }
 
     @Operation(
-            summary = "Update the documentation for a project from a GitHub Payload.",
+            summary = "Update the documentation for a project from a GitHub webhook.",
             security = {
                     @SecurityRequirement(name = "APIKey")
             }

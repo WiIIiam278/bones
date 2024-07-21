@@ -40,6 +40,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -61,7 +62,8 @@ public class ProjectDocsService {
         this.cloneWikis();
     }
 
-    public Optional<String> getPage(@NotNull Project project, @NotNull String pageSlug) {
+    public Optional<String> getPage(@NotNull Project project, @NotNull String langCode,
+                                    @NotNull String pageSlug) {
         if (!this.wikis.containsKey(project.getSlug())) {
             return Optional.empty();
         }
@@ -70,13 +72,12 @@ public class ProjectDocsService {
         if (!pageSlug.matches(PATTERN) || pageSlug.startsWith(".")) {
             return Optional.empty();
         }
-        if (!pageSlug.endsWith(".md")) {
-            pageSlug += ".md";
-        }
-        final String slug = pageSlug;
+        final String slug = pageSlug.endsWith(".md") ? pageSlug.substring(0, pageSlug.length() - 3) : pageSlug;
+        final String locale = langCode.equalsIgnoreCase(config.getDefaultDocLocale()) ? "" : langCode.toLowerCase();
 
         // Find a file ignoring case in the project's docs directory at pageSlug
-        final File[] file = getProjectPath(project).toFile().listFiles((dir, name) -> name.equalsIgnoreCase(slug));
+        final File[] file = getProjectPath(project).toFile().listFiles
+                ((dir, name) -> name.equalsIgnoreCase(String.format("%s%s.md", slug, locale)));
         if (file == null || file.length == 0) {
             return Optional.empty();
         }

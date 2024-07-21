@@ -82,6 +82,7 @@ app:
   discord-guild-id: ${DISCORD_GUILD_ID}
   cookie-domain: ${COOKIE_DOMAIN}
   github-webhook-secret: ${GITHUB_WEBHOOK_SECRET}
+  default-doc-locale: ${DEFAULT_DOC_LOCALE}
 
 # Provide OpenAPI docs
 springdoc:
