@@ -178,7 +178,7 @@ public class Project implements Comparable<Project> {
 
         @Schema(
                 name = "pullReadmeFromGithub",
-                description = "Whether to pull the README from the GitHub repository.",
+                description = "Whether to pull the README body from the GitHub repository.",
                 example = "true"
         )
         @Builder.Default
@@ -186,10 +186,11 @@ public class Project implements Comparable<Project> {
 
         @Schema(
                 name = "readmeBody",
-                description = "README body text. Note that if pullReadmeFromGithub is true, this will be ignored.",
+                description = "README body text. Note that if pullReadmeFromGithub is true, this will be overwritten.",
                 example = "HuskHomes is a lightweight, fast and feature-rich homes plugin. (...)"
         )
         @Builder.Default
+        @Setter
         private String readmeBody = null;
 
         @Schema(

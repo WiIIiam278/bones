@@ -39,6 +39,7 @@ import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.ChannelRepository;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.exception.*;
+import net.william278.backend.service.GitHubDataService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -53,11 +54,13 @@ public class ProjectController {
 
     private final ProjectRepository projects;
     private final ChannelRepository channels;
+    private final GitHubDataService github;
 
     @Autowired
-    public ProjectController(ProjectRepository projects, ChannelRepository channels) {
+    public ProjectController(ProjectRepository projects, ChannelRepository channels, GitHubDataService github) {
         this.projects = projects;
         this.channels = channels;
+        this.github = github;
     }
 
     @Operation(
@@ -144,12 +147,17 @@ public class ProjectController {
             throw new InvalidProject();
         }
 
-        // Update release channels & slug
+        // Update release channels
         project.getReleaseChannels().forEach(c -> project.addReleaseChannel(
                 channels.findChannelByName(c).orElse(channels.save(new Channel(c))))
         );
-        project.setSlug(projectSlug);
 
+        // Update README
+        if (project.getMetadata().isPullReadmeFromGithub()) {
+            project.getMetadata().setReadmeBody(github.getReadme(project).orElse(null));
+        }
+
+        project.setSlug(projectSlug);
         return projects.save(project);
     }
 

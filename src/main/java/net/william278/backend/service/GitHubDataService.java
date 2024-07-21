@@ -37,6 +37,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -67,6 +69,16 @@ public class GitHubDataService implements StatsService {
                 return StatsController.Stats.builder().build();
             }
         });
+    }
+
+    public Optional<String> getReadme(@NotNull Project project) {
+        final String repoId = getRepositoryId(project).orElseThrow(IllegalArgumentException::new);
+        try (InputStream readme = github.getRepository(repoId).getReadme().read()) {
+            return Optional.of(new String(readme.readAllBytes(), StandardCharsets.UTF_8));
+        } catch (IOException e) {
+            log.warn("Exception fetching GitHub README for project {}", repoId, e);
+            return Optional.empty();
+        }
     }
 
     private Optional<String> getRepositoryId(@NotNull Project project) {
