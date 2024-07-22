@@ -136,12 +136,6 @@ public class Version {
     }
 
     @NotNull
-    public Download getDownloadByFileName(@NotNull String fileName) {
-        final Optional<Download> download = downloads.stream().filter(d -> d.getName().equals(fileName)).findFirst();
-        return download.orElseThrow(DownloadNotFound::new);
-    }
-
-    @NotNull
     public Path getDownloadPathFor(@NotNull Distribution distribution, @NotNull AppConfiguration config) {
         return config.getStoragePath()
                 .resolve(project.getSlug())

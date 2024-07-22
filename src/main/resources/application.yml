@@ -67,7 +67,10 @@ spring:
             user-info-uri: https://discord.com/api/users/@me
             user-name-attribute: username
 
-# App config
+  servlet:
+    multipart:
+      max-file-size: 100MB
+
 app:
   api-base-url: ${API_BASE_URL}
   api-title: ${API_TITLE}
@@ -105,6 +108,8 @@ server:
     session:
       cookie:
         domain: ${COOKIE_DOMAIN}
+
+
 
 # Debug
 logging:

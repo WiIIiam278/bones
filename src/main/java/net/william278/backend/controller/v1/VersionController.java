@@ -36,13 +36,13 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.*;
-import net.william278.backend.database.repository.ChannelRepository;
-import net.william278.backend.database.repository.DistributionRepository;
-import net.william278.backend.database.repository.ProjectRepository;
-import net.william278.backend.database.repository.VersionRepository;
+import net.william278.backend.database.repository.*;
 import net.william278.backend.exception.*;
 import net.william278.backend.service.GitHubImportService;
+import org.apache.commons.io.FileUtils;
 import org.jetbrains.annotations.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -53,12 +53,12 @@ import org.springframework.util.DigestUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.security.MessageDigest;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @RestController
@@ -67,6 +67,7 @@ import java.util.stream.Collectors;
 public class VersionController {
 
     public static final String API_KEY_HEADER = "X-Api-Key";
+    private static final Logger log = LoggerFactory.getLogger(VersionController.class);
 
     private final AppConfiguration config;
     private final ProjectRepository projects;
@@ -74,16 +75,18 @@ public class VersionController {
     private final VersionRepository versions;
     private final GitHubImportService githubImporter;
     private final DistributionRepository distributions;
+    private final DownloadRepository downloads;
 
     @Autowired
     public VersionController(AppConfiguration config, ProjectRepository projects, ChannelRepository channels,
-                             VersionRepository versions, GitHubImportService gitHubImportService, DistributionRepository distributions) {
+                             VersionRepository versions, GitHubImportService gitHubImportService, DistributionRepository distributions, DownloadRepository downloads) {
         this.config = config;
         this.projects = projects;
         this.channels = channels;
         this.versions = versions;
         this.githubImporter = gitHubImportService;
         this.distributions = distributions;
+        this.downloads = downloads;
     }
 
     @Operation(
@@ -219,7 +222,11 @@ public class VersionController {
     @PostMapping(
             value = "/v1/projects/{projectSlug:" + Project.PATTERN
                     + "}/channels/{channelName:" + Channel.PATTERN + "}/versions",
-            produces = {MediaType.APPLICATION_JSON_VALUE}
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            headers = {
+                    "content-type=multipart/mixed", "content-type=multipart/form-data",
+                    "content-type=application/octet-stream", "content-type=application/json"
+            }
     )
     public Version postVersion(
             @RequestHeader(value = API_KEY_HEADER, required = false) String secretKey,
@@ -233,8 +240,13 @@ public class VersionController {
             @Pattern(regexp = Channel.PATTERN)
             @PathVariable String channelName,
 
-            @RequestBody Version version,
-            @RequestParam("files") MultipartFile[] files
+            @RequestPart("version")
+            @Schema(description = "The version to create.", implementation = Version.class)
+            Version version,
+
+            @RequestPart("files")
+            @Schema(description = "The files to upload for the version.")
+            MultipartFile[] files
     ) {
         if (principal != null) {
             if (!principal.isAdmin()) {
@@ -249,33 +261,51 @@ public class VersionController {
         final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
 
         // Create the channel, add it to the project if it doesn't exist
-        final Channel channel = channels.findChannelByName(channelName)
-                .orElse(channels.save(new Channel(version.getChannel().getName())));
+        final Channel channel = channels.findChannelByName(channelName).orElse(channels.save(new Channel(channelName)));
         if (project.addReleaseChannel(channel)) {
             projects.save(project);
         }
 
         // Set version parameters
         version.setProject(project);
-        version.getDistributions().forEach(dist -> dist.setProject(project));
         version.setChannel(channel);
+        if (version.getTimestamp() == null) {
+            version.setTimestamp(Instant.now());
+        }
+
+        // Set dist
+        version.getDownloads().forEach(d -> d.setDistribution(
+                distributions.findDistributionByNameAndProject(d.getDistribution().getName(), project).orElseGet(() -> {
+                    d.getDistribution().setProject(project);
+                    return distributions.save(d.getDistribution());
+                })
+        ));
 
         // Save and correctly relocate the uploaded files
         try {
-            for (MultipartFile file : files) {
-                final String name = Objects.requireNonNull(file.getOriginalFilename(), "File name was null.");
-                final Download download = version.getDownloadByFileName(name);
-                final Path dest = version.getDownloadPathFor(download.getDistribution(), config).resolve(name);
+            for (int i = 0; i < files.length; i++) {
+                final MultipartFile file = files[i];
+                final Download download = version.getDownloads().get(i);
+                final Path dest = version.getDownloadPathFor(download.getDistribution(), config);
 
-                //noinspection ResultOfMethodCallIgnored
-                dest.toFile().getParentFile().mkdirs();
+                // Check size
+                long size = file.getSize();
+                if (size <= 0) {
+                    throw new IllegalArgumentException("File size was 0");
+                }
+                download.setFileSize(size);
 
                 // Move file
-                file.transferTo(dest);
-                download.setMd5(DigestUtils.md5Digest(file.getInputStream()));
-                download.setFileSize(file.getSize());
+                try (InputStream copy = file.getInputStream()) {
+                    FileUtils.copyInputStreamToFile(copy, dest.toFile());
+                }
+                try (InputStream copy = file.getInputStream()) {
+                    download.setMd5(DigestUtils.md5Digest(copy));
+                }
+                downloads.save(download);
             }
-        } catch (IOException e) {
+        } catch (Throwable e) {
+            log.warn("Failed to upload files for version {} of project {}", version.getName(), projectSlug, e);
             throw new UploadFailed();
         }
 
