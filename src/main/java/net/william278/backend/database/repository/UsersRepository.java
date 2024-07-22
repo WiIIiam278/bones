@@ -41,4 +41,7 @@ public interface UsersRepository extends JpaRepository<User, String> {
     @NotNull
     Page<User> findAllByNameContainingIgnoreCaseOrderByCreatedAtAsc(@NotNull String name, @NotNull Pageable pageable);
 
+    @NotNull
+    Page<User> findAllByOrderByCreatedAtAsc(@NotNull Pageable pageable);
+
 }
