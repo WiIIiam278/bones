@@ -94,7 +94,7 @@ public class UserController {
             throw new NoPermission();
         }
         if (nameSearch != null && !nameSearch.isBlank()) {
-            return users.findAllByNameContainingIgnoreCase(nameSearch, PageRequest.of(page, size));
+            return users.findAllByNameContainingIgnoreCaseOrderByCreatedAtAsc(nameSearch, PageRequest.of(page, size));
         }
         return users.findAll(PageRequest.of(page, size));
     }

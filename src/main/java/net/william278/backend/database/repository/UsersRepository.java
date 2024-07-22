@@ -39,6 +39,6 @@ public interface UsersRepository extends JpaRepository<User, String> {
     Optional<User> findById(@NotNull String id);
 
     @NotNull
-    Page<User> findAllByNameContainingIgnoreCase(@NotNull String name, @NotNull Pageable pageable);
+    Page<User> findAllByNameContainingIgnoreCaseOrderByCreatedAtAsc(@NotNull String name, @NotNull Pageable pageable);
 
 }
