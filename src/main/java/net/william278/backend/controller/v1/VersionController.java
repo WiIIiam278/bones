@@ -188,6 +188,9 @@ public class VersionController {
         return versions.findByProjectAndChannelAndName(project, channel, versionName).orElseThrow(VersionNotFound::new);
     }
 
+    @Operation(
+            summary = "Get the latest version of a project on a specific channel."
+    )
     @ApiResponse(
             responseCode = "200"
     )
@@ -196,7 +199,6 @@ public class VersionController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @CrossOrigin
-    @Operation(summary = "Get the latest version of a project on a specific channel.")
     public Version getLatestProjectVersion(@PathVariable String projectSlug, @PathVariable String channelName) {
         final Project foundProject = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
         final Channel foundChannel = channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
