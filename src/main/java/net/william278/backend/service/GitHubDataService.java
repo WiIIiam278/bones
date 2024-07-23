@@ -27,7 +27,6 @@ package net.william278.backend.service;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import net.william278.backend.configuration.AppConfiguration;
-import net.william278.backend.controller.v1.StatsController;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.util.HTTPUtils;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +44,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 @Slf4j
 @Service
-public class GitHubDataService implements StatsService {
+public class GitHubDataService implements StatsProvider {
 
     private final static int PAGE_SIZE = 50;
     private final GitHub github;
@@ -60,13 +59,13 @@ public class GitHubDataService implements StatsService {
     }
 
     @Override
-    public Optional<StatsController.Stats> getStats(@NotNull Project project) {
+    public Optional<Project.Stats> getStats(@NotNull Project project) {
         return getRepositoryId(project).map(id -> {
             try {
                 return getGitHubStats(id);
             } catch (IOException e) {
                 log.warn("Exception fetching GitHub stats for project {}", id, e);
-                return StatsController.Stats.builder().build();
+                return Project.Stats.builder().build();
             }
         });
     }
@@ -90,13 +89,13 @@ public class GitHubDataService implements StatsService {
     }
 
     @NotNull
-    public StatsController.Stats getGitHubStats(@NotNull String repository) throws IOException {
+    public Project.Stats getGitHubStats(@NotNull String repository) throws IOException {
         final AtomicLong downloads = new AtomicLong();
         final GHRepository repo = github.getRepository(repository);
         repo.listReleases()._iterator(PAGE_SIZE).forEachRemaining(
                 release -> downloads.getAndAdd(getTotalReleaseAssetDownloads(release))
         );
-        return StatsController.Stats.builder()
+        return Project.Stats.builder()
                 .interactions(repo.getStargazersCount())
                 .downloadCount(downloads.get())
                 .build();

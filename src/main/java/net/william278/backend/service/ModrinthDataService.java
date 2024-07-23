@@ -29,7 +29,6 @@ import lombok.extern.slf4j.Slf4j;
 import masecla.modrinth4j.client.agent.UserAgent;
 import masecla.modrinth4j.main.ModrinthAPI;
 import net.william278.backend.configuration.AppConfiguration;
-import net.william278.backend.controller.v1.StatsController;
 import net.william278.backend.database.model.Project;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,7 +38,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-public class ModrinthDataService implements StatsService {
+public class ModrinthDataService implements StatsProvider {
 
     private final ModrinthAPI modrinth;
 
@@ -55,7 +54,7 @@ public class ModrinthDataService implements StatsService {
     }
 
     @Override
-    public Optional<StatsController.Stats> getStats(@NotNull Project project) {
+    public Optional<Project.Stats> getStats(@NotNull Project project) {
         return getModrinthSlug(project)
                 .flatMap(slug -> {
                     try {
@@ -67,7 +66,7 @@ public class ModrinthDataService implements StatsService {
                         return Optional.empty();
                     }
                 })
-                .map(p -> StatsController.Stats.builder().downloadCount(p.getDownloads()).build());
+                .map(p -> Project.Stats.builder().downloadCount(p.getDownloads()).build());
     }
 
     private Optional<String> getModrinthSlug(@NotNull Project project) {

@@ -40,6 +40,7 @@ import net.william278.backend.database.repository.ChannelRepository;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.exception.*;
 import net.william278.backend.service.GitHubDataService;
+import net.william278.backend.service.StatsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -56,12 +57,14 @@ public class ProjectController {
     private final ProjectRepository projects;
     private final ChannelRepository channels;
     private final GitHubDataService github;
+    private final StatsService statsService;
 
     @Autowired
-    public ProjectController(ProjectRepository projects, ChannelRepository channels, GitHubDataService github) {
+    public ProjectController(ProjectRepository projects, ChannelRepository channels, GitHubDataService github, StatsService statsService) {
         this.projects = projects;
         this.channels = channels;
         this.github = github;
+        this.statsService = statsService;
     }
 
     @Operation(
@@ -76,7 +79,7 @@ public class ProjectController {
     )
     @CrossOrigin(value = "*", allowCredentials = "false")
     public List<Project> getProjects() {
-        return projects.findAll();
+        return projects.findAll().stream().map(p -> p.updateStats(statsService)).toList();
     }
 
     @Operation(
@@ -100,7 +103,7 @@ public class ProjectController {
             @Pattern(regexp = Project.PATTERN)
             @PathVariable String projectSlug
     ) {
-        return projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
+        return projects.findById(projectSlug).map(p -> p.updateStats(statsService)).orElseThrow(ProjectNotFound::new);
     }
 
     @Operation(

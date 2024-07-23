@@ -24,31 +24,18 @@
 
 package net.william278.backend.service;
 
-import lombok.AllArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import net.william278.backend.database.model.Project;
-import net.william278.backend.database.repository.VersionRepository;
+import okhttp3.CacheControl;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.stereotype.Service;
 
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
-@Slf4j
-@Service
-@AllArgsConstructor
-public class LocalDataService implements StatsProvider {
+public interface StatsProvider {
 
-    private final VersionRepository versions;
+    @NotNull
+    CacheControl CACHE_CONTROL = new CacheControl.Builder().maxAge(4, TimeUnit.HOURS).build();
 
-    @Override
-    public Optional<Project.Stats> getStats(@NotNull Project project) {
-        final Integer downloadCount = versions.sumDownloadCountByProject(project);
-        if (downloadCount == null) {
-            return Optional.empty();
-        }
-        return Optional.of(Project.Stats.builder()
-                .downloadCount(downloadCount)
-                .build());
-    }
+    Optional<Project.Stats> getStats(@NotNull Project project);
 
 }

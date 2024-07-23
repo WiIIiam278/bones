@@ -24,19 +24,84 @@
 
 package net.william278.backend.service;
 
-import net.william278.backend.controller.v1.StatsController;
+import lombok.*;
 import net.william278.backend.database.model.Project;
-import okhttp3.CacheControl;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CompletableFuture;
+import java.util.stream.Stream;
 
-public interface StatsService {
+@Service
+public class StatsService {
 
+    private static final long CACHE_TIME = 60 * 60 * 4; // 4 hours
+
+    private final GitHubDataService github;
+    private final ModrinthDataService modrinth;
+    private final SpigotDataService spigot;
+    private final PolymartDataService polymart;
+    private final HangarDataService hangar;
+    private final LocalDataService local;
+    private final Map<String, CachedStats> cache = new HashMap<>();
+
+
+    @SneakyThrows
+    @Autowired
+    public StatsService(GitHubDataService github, ModrinthDataService modrinth, SpigotDataService spigot,
+                        PolymartDataService polymart, HangarDataService hangar, LocalDataService local) {
+        this.github = github;
+        this.modrinth = modrinth;
+        this.spigot = spigot;
+        this.polymart = polymart;
+        this.hangar = hangar;
+        this.local = local;
+    }
+
+    // Combine the stats from all services
     @NotNull
-    CacheControl CACHE_CONTROL = new CacheControl.Builder().maxAge(4, TimeUnit.HOURS).build();
+    public Project.Stats fetchStats(@NotNull Project project) {
+        final String slug = project.getSlug();
+        if (cache.containsKey(slug)) {
+            final CachedStats cached = cache.get(slug);
+            if (cached.isExpired()) {
+                cached.setExpiry(Instant.now().plusSeconds(CACHE_TIME));
+                CompletableFuture.runAsync(() -> cached.setStats(getStatsNow(project)));
+            }
+            return cached.getStats();
+        }
 
-    Optional<StatsController.Stats> getStats(@NotNull Project project);
+        final Project.Stats newStats = new Project.Stats();
+        cache.put(slug, new CachedStats(newStats, Instant.now().plusSeconds(CACHE_TIME)));
+        CompletableFuture.runAsync(() -> cache.get(slug).setStats(getStatsNow(project)));
+        return newStats;
+    }
+
+    // Get the stats from all services
+    @NotNull
+    private Project.Stats getStatsNow(@NotNull Project project) {
+        return Stream.of(github, modrinth, spigot, polymart, hangar, local)
+                .map((service) -> service.getStats(project))
+                .filter(Optional::isPresent).map(Optional::get)
+                .reduce(Project.Stats::combine)
+                .orElse(new Project.Stats());
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    private static class CachedStats {
+        private Project.Stats stats;
+        private Instant expiry;
+
+        private boolean isExpired() {
+            return Instant.now().isAfter(expiry);
+        }
+    }
 
 }

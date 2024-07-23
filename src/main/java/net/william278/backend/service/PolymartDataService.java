@@ -27,7 +27,6 @@ package net.william278.backend.service;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
-import net.william278.backend.controller.v1.StatsController;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.util.HTTPUtils;
 import okhttp3.OkHttpClient;
@@ -42,7 +41,7 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-public class PolymartDataService implements StatsService {
+public class PolymartDataService implements StatsProvider {
 
     private static final String ENDPOINT_URL = "https://api.polymart.org/v1/getResourceInfo?resource_id=%s";
 
@@ -50,9 +49,9 @@ public class PolymartDataService implements StatsService {
     private final ObjectMapper mapper = new ObjectMapper();
 
     @Override
-    public Optional<StatsController.Stats> getStats(@NotNull Project project) {
+    public Optional<Project.Stats> getStats(@NotNull Project project) {
         return getPolymartId(project).map(ENDPOINT_URL::formatted).flatMap(this::fetchPolymart).map(
-                (polymart) -> StatsController.Stats.builder()
+                (polymart) -> Project.Stats.builder()
                         .downloadCount(polymart.downloads())
                         .averageRating(polymart.reviews().stars())
                         .numberOfRatings(polymart.reviews().count())

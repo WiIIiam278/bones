@@ -30,6 +30,7 @@ import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
+import net.william278.backend.service.StatsService;
 import org.hibernate.validator.constraints.Length;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,13 +73,42 @@ public class Project implements Comparable<Project> {
     @JsonIgnore
     @Getter(AccessLevel.NONE)
     @Setter(AccessLevel.PUBLIC)
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(
             name = "project_release_channels",
             joinColumns = @JoinColumn(name = "project_slug"),
             inverseJoinColumns = @JoinColumn(name = "channel_id")
     )
     private Set<Channel> releaseChannels = new HashSet<>();
+
+    @JsonIgnore
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    @Column(length = Integer.MAX_VALUE)
+    private String metadata;
+
+    @JsonIgnore
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    @Transient
+    private Stats stats;
+
+    @Schema(
+            name = "metadata",
+            description = "JSON metadata for the project."
+    )
+    @JsonSerialize
+    @SneakyThrows
+    @NotNull
+    public Metadata getMetadata() {
+        return new ObjectMapper().readValue(metadata, Metadata.class);
+    }
+
+    @SneakyThrows
+    @SuppressWarnings("unused")
+    public void setMetadata(@NotNull Metadata metadata) {
+        this.metadata = new ObjectMapper().writeValueAsString(metadata);
+    }
 
     @Schema(
             name = "releaseChannels",
@@ -97,27 +127,22 @@ public class Project implements Comparable<Project> {
         return releaseChannels.add(channel);
     }
 
-    @JsonIgnore
-    @Getter(AccessLevel.NONE)
-    @Setter(AccessLevel.NONE)
-    @Column(length = Integer.MAX_VALUE)
-    private String metadata;
-
     @Schema(
-            name = "metadata",
-            description = "JSON metadata for the project."
+            name = "stats",
+            description = "Statistics for the project.",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
     @JsonSerialize
-    @SneakyThrows
     @NotNull
-    public Metadata getMetadata() {
-        return new ObjectMapper().readValue(metadata, Metadata.class);
+    @SuppressWarnings("unused")
+    public Stats getStats() {
+        return stats;
     }
 
-    @SneakyThrows
-    @SuppressWarnings("unused")
-    public void setMetadata(@NotNull Metadata metadata) {
-        this.metadata = new ObjectMapper().writeValueAsString(metadata);
+    @NotNull
+    public Project updateStats(@NotNull StatsService stats) {
+        this.stats = stats.fetchStats(this);
+        return this;
     }
 
     @Override
@@ -364,4 +389,49 @@ public class Project implements Comparable<Project> {
         }
     }
 
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Schema(
+            name = "Stats",
+            description = "A collection of statistics for a project"
+    )
+    public static class Stats {
+
+        @Schema(
+                name = "downloadCount",
+                description = "The number of times the project has been downloaded"
+        )
+        public long downloadCount;
+
+        @Schema(
+                name = "averageRating",
+                description = "The average star rating of the project, out of 5"
+        )
+        public double averageRating;
+
+        @Schema(
+                name = "numberOfRatings",
+                description = "The number of ratings the project has received"
+        )
+        public long numberOfRatings;
+
+        @Schema(
+                name = "interactions",
+                description = "The number of positive interactions the project has received"
+        )
+        public long interactions;
+
+        @NotNull
+        public Stats combine(@NotNull Stats other) {
+            return new Stats(
+                    this.downloadCount + other.downloadCount,
+                    (this.averageRating * this.numberOfRatings + other.averageRating * other.numberOfRatings)
+                    / Math.max(this.numberOfRatings + other.numberOfRatings, 1),
+                    this.numberOfRatings + other.numberOfRatings,
+                    this.interactions + other.interactions
+            );
+        }
+
+    }
 }
