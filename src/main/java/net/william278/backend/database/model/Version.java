@@ -69,7 +69,7 @@ public class Version {
     private Channel channel;
 
     @Schema(
-            name = "version",
+            name = "name",
             description = "Name/tag of the version.",
             pattern = PATTERN,
             example = "4.7"
