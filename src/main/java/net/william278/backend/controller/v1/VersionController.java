@@ -40,7 +40,6 @@ import net.william278.backend.database.repository.*;
 import net.william278.backend.exception.*;
 import net.william278.backend.service.GitHubImportService;
 import org.apache.commons.io.FileUtils;
-import org.jetbrains.annotations.Nullable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +65,6 @@ import java.util.stream.Collectors;
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
 public class VersionController {
 
-    public static final String API_KEY_HEADER = "X-Api-Key";
     private static final Logger log = LoggerFactory.getLogger(VersionController.class);
 
     private final AppConfiguration config;
@@ -206,15 +204,19 @@ public class VersionController {
     }
 
     @Operation(
-            summary = "Create a new version.",
+            summary = "Create a new version as a logged-in user.",
             security = {
-                    @SecurityRequirement(name = "Secret Key"),
                     @SecurityRequirement(name = "OAuth2")
             }
     )
     @ApiResponse(
             responseCode = "200",
             description = "The version was created successfully."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "Not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @ApiResponse(
             responseCode = "403",
@@ -230,9 +232,8 @@ public class VersionController {
                     "content-type=application/octet-stream", "content-type=application/json"
             }
     )
-    public Version postVersion(
-            @RequestHeader(value = API_KEY_HEADER, required = false) String secretKey,
-            @AuthenticationPrincipal @Nullable User principal,
+    public Version postVersionOAuth(
+            @AuthenticationPrincipal User principal,
 
             @Parameter(description = "The slug of the project to create a version for.")
             @Pattern(regexp = Project.PATTERN)
@@ -250,16 +251,132 @@ public class VersionController {
             @Schema(description = "The files to upload for the version.")
             MultipartFile[] files
     ) {
-        if (principal != null) {
-            if (!principal.isAdmin()) {
-                throw new NoPermission();
-            }
-        } else if ((config.getApiSecret() != null && secretKey != null) && !MessageDigest
-                .isEqual(Utf8.encode(config.getApiSecret()), Utf8.encode(secretKey))) {
-            throw new NotAuthenticated();
-        } else {
+        if (principal == null) {
             throw new NotAuthenticated();
         }
+        if (!principal.isAdmin()) {
+            throw new NoPermission();
+        }
+        return createNewVersion(projectSlug, channelName, version, files);
+    }
+
+    @Operation(
+            summary = "Create a new version with an API key",
+            security = {
+                    @SecurityRequirement(name = "APIKey")
+            }
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The version was created successfully."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "No API key provided.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "Invalid API key.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @PostMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN
+                    + "}/channels/{channelName:" + Channel.PATTERN + "}/versions/api",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            headers = {
+                    "content-type=multipart/mixed", "content-type=multipart/form-data",
+                    "content-type=application/octet-stream", "content-type=application/json"
+            }
+    )
+    @CrossOrigin(
+            origins = "*", allowCredentials = "false",
+            allowedHeaders = {"X-Api-Key", "Content-Type", "Accept"}
+    )
+    public Version postVersionApiKey(
+            @RequestHeader("X-Api-Key") String apiKey,
+
+            @Parameter(description = "The slug of the project to create a version for.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug,
+
+            @Parameter(description = "The name of the channel to release the version on.")
+            @Pattern(regexp = Channel.PATTERN)
+            @PathVariable String channelName,
+
+            @RequestPart("version")
+            @Schema(description = "The version to create.", implementation = Version.class)
+            Version version,
+
+            @RequestPart("files")
+            @Schema(description = "The files to upload for the version.")
+            MultipartFile[] files
+    ) {
+        if (config.getApiSecret() == null) {
+            throw new IllegalStateException("API key is not set on server.");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new NotAuthenticated();
+        }
+        if (!MessageDigest.isEqual(Utf8.encode(config.getApiSecret()), Utf8.encode(apiKey))) {
+            throw new NoPermission();
+        }
+        return createNewVersion(projectSlug, channelName, version, files);
+    }
+
+    @Operation(
+            summary = "Import versions from GitHub to a channel.",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Import started."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "Not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized to import versions.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @PostMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN
+                    + "}/channels/{channelName:" + Channel.PATTERN + "}/versions/import/github",
+            produces = {MediaType.APPLICATION_JSON_VALUE},
+            consumes = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public VersionImportRequest importGitHubVersions(
+            @AuthenticationPrincipal User principal,
+
+            @Parameter(description = "The slug of the project to import versions for.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug,
+
+            @Parameter(description = "The name of the channel to import versions to.")
+            @Pattern(regexp = Channel.PATTERN)
+            @PathVariable String channelName,
+
+            @RequestBody VersionImportRequest request
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        if (!principal.isAdmin()) {
+            throw new NoPermission();
+        }
+        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
+        final Channel channel = channels.findChannelByName(channelName).orElse(new Channel(channelName));
+
+        githubImporter.importGithub(project, request.source(), channel, request.distributionMatchersMap());
+        return request;
+    }
+
+    @NotNull
+    private Version createNewVersion(@NotNull String projectSlug, @NotNull String channelName,
+                                     @NotNull Version version, @NotNull MultipartFile[] files) {
         final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
 
         // Create the channel, add it to the project if it doesn't exist
@@ -312,56 +429,6 @@ public class VersionController {
         }
 
         return versions.save(version);
-    }
-
-    @Operation(
-            summary = "Import versions from GitHub to a channel.",
-            security = @SecurityRequirement(name = "OAuth2")
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Import started."
-    )
-    @ApiResponse(
-            responseCode = "401",
-            description = "Not logged in.",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-    )
-    @ApiResponse(
-            responseCode = "403",
-            description = "Not authorized to import versions.",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-    )
-    @PostMapping(
-            value = "/v1/projects/{projectSlug:" + Project.PATTERN
-                    + "}/channels/{channelName:" + Channel.PATTERN + "}/versions/import/github",
-            produces = {MediaType.APPLICATION_JSON_VALUE},
-            consumes = {MediaType.APPLICATION_JSON_VALUE}
-    )
-    public VersionImportRequest importGitHubVersions(
-            @AuthenticationPrincipal User principal,
-
-            @Parameter(description = "The slug of the project to import versions for.")
-            @Pattern(regexp = Project.PATTERN)
-            @PathVariable String projectSlug,
-
-            @Parameter(description = "The name of the channel to import versions to.")
-            @Pattern(regexp = Channel.PATTERN)
-            @PathVariable String channelName,
-
-            @RequestBody VersionImportRequest request
-    ) {
-        if (principal == null) {
-            throw new NotAuthenticated();
-        }
-        if (!principal.isAdmin()) {
-            throw new NoPermission();
-        }
-        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
-        final Channel channel = channels.findChannelByName(channelName).orElse(new Channel(channelName));
-
-        githubImporter.importGithub(project, request.source(), channel, request.distributionMatchersMap());
-        return request;
     }
 
     @Schema(description = "Request to import versions from GitHub.")

@@ -161,7 +161,7 @@ public class DocsController {
     @Operation(
             summary = "Update the documentation for a project from a GitHub webhook.",
             security = {
-                    @SecurityRequirement(name = "APIKey")
+                    @SecurityRequirement(name = "WebhookSecret")
             }
     )
     @ApiResponse(

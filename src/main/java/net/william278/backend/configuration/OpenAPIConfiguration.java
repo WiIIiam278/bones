@@ -31,6 +31,7 @@ import io.swagger.v3.oas.models.servers.Server;
 import org.springdoc.core.customizers.OpenApiCustomizer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 import java.net.URL;
 import java.util.List;
@@ -38,6 +39,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 @Configuration
+@Profile({"!production && staging"})
 public class OpenAPIConfiguration {
 
     @Bean

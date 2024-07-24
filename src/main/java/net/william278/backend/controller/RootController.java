@@ -24,6 +24,10 @@
 
 package net.william278.backend.controller;
 
+import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
+import net.william278.backend.configuration.AppConfiguration;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -31,14 +35,19 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 import java.net.URI;
 
-// Redirect to the API documentation
 @Controller
+@RequiredArgsConstructor
 public class RootController {
 
+    private final AppConfiguration config;
+    private final Environment environment;
+
+    // Redirect to the API documentation on staging, or the frontend if in production
+    @SneakyThrows
     @GetMapping({"/", "/docs"})
-    public ResponseEntity<?> redirectToDocs() {
+    public ResponseEntity<?> baseEndpointRedirect() {
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create("docs/"))
+                .location(isStaging() ? URI.create("docs/") : config.getFrontendBaseUrl().toURI())
                 .build();
     }
 
@@ -47,6 +56,10 @@ public class RootController {
         return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create("oauth2/authorization/discord"))
                 .build();
+    }
+
+    private boolean isStaging() {
+        return environment.getActiveProfiles().length > 0 && environment.getActiveProfiles()[0].equals("staging");
     }
 
 }

@@ -26,6 +26,10 @@ spring:
   application:
     name: william278-backend
 
+  # Production or staging
+  profiles:
+    active: ${ENVIRONMENT_TYPE}
+
   # Stop the serving of static resources
   web:
     resources:
@@ -33,7 +37,7 @@ spring:
 
   # Configure the database
   jpa:
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: update
   datasource:
@@ -109,12 +113,3 @@ server:
     session:
       cookie:
         domain: ${COOKIE_DOMAIN}
-
-
-
-# Debug
-logging:
-  level:
-    org:
-      springframework:
-        security: DEBUG

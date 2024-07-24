@@ -25,6 +25,7 @@
 package net.william278.backend.configuration;
 
 import lombok.RequiredArgsConstructor;
+import net.william278.backend.database.model.Channel;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.security.DiscordOAuthUserService;
 import org.springframework.context.annotation.Bean;
@@ -69,7 +70,13 @@ public class DiscordOAuthConfiguration {
 
                     // Ignore webhook endpoint
                     c.ignoringRequestMatchers(new AntPathRequestMatcher(
-                            "/v1/projects/{projectName:" + Project.PATTERN + "}/docs",
+                            "/v1/projects/{projectName:%s}/docs".formatted(Project.PATTERN),
+                            "POST", false
+                    ));
+                    // Ignore API version publishing endpoint
+                    c.ignoringRequestMatchers(new AntPathRequestMatcher(
+                            "/v1/projects/{projectSlug:%s}/channels/{channelName:%s}/versions/api"
+                                    .formatted(Project.PATTERN, Channel.PATTERN),
                             "POST", false
                     ));
 
