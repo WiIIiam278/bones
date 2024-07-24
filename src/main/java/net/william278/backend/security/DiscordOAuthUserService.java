@@ -65,14 +65,10 @@ public class DiscordOAuthUserService extends DefaultOAuth2UserService {
             return oAuthUser;
         }
 
-        // Get/create user
-        final User user = users.save(users.findById(id)
-                .map(u -> updateUser(u, oAuthUser))
-                .orElse(createUser(oAuthUser)));
-
-        // Update roles
-        discordRoles.updateMemberRoles(user, accessToken);
-        return user;
+        return users.save(discordRoles.updateMemberRoles(
+                users.findById(id).map(u -> updateUser(u, oAuthUser)).orElse(createUser(oAuthUser)),
+                accessToken
+        ));
     }
 
     @NotNull

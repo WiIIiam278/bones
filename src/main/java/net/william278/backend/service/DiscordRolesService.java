@@ -31,7 +31,6 @@ import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.ProjectRepository;
-import net.william278.backend.database.repository.UsersRepository;
 import net.william278.backend.util.HTTPUtils;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -57,19 +56,17 @@ public class DiscordRolesService {
 
     private final OkHttpClient client = HTTPUtils.createClient();
     private final ObjectMapper mapper = new ObjectMapper();
-    private final String guildId;
     private final ProjectRepository projects;
-    private final UsersRepository users;
+    private final String guildId;
 
     @Autowired
-    public DiscordRolesService(AppConfiguration config, ProjectRepository projects, UsersRepository users) {
+    public DiscordRolesService(AppConfiguration config, ProjectRepository projects) {
         this.guildId = config.getDiscordGuildId();
         this.projects = projects;
-        this.users = users;
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, noRollbackFor = Exception.class)
-    public void updateMemberRoles(@NotNull User user, @NotNull String accessToken) {
+    public User updateMemberRoles(@NotNull User user, @NotNull String accessToken) {
         final Request request = new Request.Builder()
                 .url(API_URL + ENDPOINT.formatted(guildId))
                 .header("Authorization", "Bearer %s".formatted(accessToken))
@@ -77,7 +74,7 @@ public class DiscordRolesService {
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
                 log.warn("HTTP {} fetching roles for {} - are they a guild member?", response.code(), user.getName());
-                return;
+                return user;
             }
 
             // Get the member's roles
@@ -87,12 +84,13 @@ public class DiscordRolesService {
             // Get linked projects and update
             final Set<Project> linkedProjects = getLinkedProjects(member.roles());
             if (user.addPurchases(linkedProjects)) {
-                log.info("Updated roles for user {} to {}", user.getId(), user.getPurchases());
-                users.save(user);
+                log.info("Fetched roles for user {} to {}", user.getName(), user.getPurchases());
+                return user;
             }
         } catch (Throwable e) {
-            log.error("Failed to update roles for user {}", user.getId(), e);
+            log.error("Failed to update roles for user {}", user.getName(), e);
         }
+        return user;
     }
 
     @NotNull
