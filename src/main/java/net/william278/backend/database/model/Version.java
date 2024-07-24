@@ -44,12 +44,12 @@ import java.util.Optional;
         name = "Version",
         description = "A version of a project on a channel, for a distribution target platform."
 )
-@Data
 @Entity
+@Table(name = "versions")
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "versions")
 public class Version {
 
     public static final String PATTERN = "[a-zA-Z0-9\\\\+._-]+";

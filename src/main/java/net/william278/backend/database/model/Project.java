@@ -45,12 +45,13 @@ import java.util.stream.Collectors;
         name = "Project",
         description = "A project."
 )
-@Data
 @Entity
+@Table(name = "projects")
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "projects")
 public class Project implements Comparable<Project> {
 
     public static final String PATTERN = "[a-z0-9._-]+";
@@ -80,6 +81,7 @@ public class Project implements Comparable<Project> {
             joinColumns = @JoinColumn(name = "project_slug"),
             inverseJoinColumns = @JoinColumn(name = "channel_id")
     )
+    @Builder.Default
     private Set<Channel> releaseChannels = new HashSet<>();
 
     @JsonIgnore

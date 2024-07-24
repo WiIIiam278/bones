@@ -37,12 +37,12 @@ import org.jetbrains.annotations.Nullable;
         name = "Distribution",
         description = "A platform distribution of a project."
 )
-@Data
 @Entity
+@Table(name = "distributions")
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "distributions")
 public class Distribution {
 
     public static final String PATTERN = "[a-z0-9._-]+";

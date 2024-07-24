@@ -37,12 +37,12 @@ import lombok.NoArgsConstructor;
         name = "Channel",
         description = "A release channel for versions of a project."
 )
-@Data
 @Entity
+@Table(name = "channels")
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "channels")
 public class Channel {
 
     public static final String PATTERN = "[a-z0-9._-]+";

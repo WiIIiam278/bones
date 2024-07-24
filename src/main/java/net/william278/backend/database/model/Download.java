@@ -38,12 +38,12 @@ import java.nio.charset.StandardCharsets;
         name = "Download",
         description = "A downloadable file, associated with a version."
 )
-@Data
 @Entity
+@Table(name = "downloads")
+@Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "downloads")
 public class Download {
 
     public static final String PATTERN = "[a-zA-Z0-9._-\\\\+]+\\.[a-zA-Z0-9._-]+";

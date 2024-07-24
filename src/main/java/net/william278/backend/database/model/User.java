@@ -41,12 +41,13 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
 
-@Data
 @Entity
+@Table(name = "users")
+@Getter
+@Setter
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "users")
 public class User implements OAuth2User {
 
     private static final String CDN_URL = "https://cdn.discordapp.com";
