@@ -24,6 +24,7 @@
 
 package net.william278.backend.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.validation.constraints.NotNull;
@@ -37,6 +38,7 @@ import org.springframework.web.context.request.WebRequest;
 
 import java.util.Map;
 
+@Hidden
 @RestController
 @Tags(value = @Tag(name = "Error Handling"))
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
