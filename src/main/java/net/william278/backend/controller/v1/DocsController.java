@@ -190,7 +190,9 @@ public class DocsController {
     @PostMapping(
             value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}/docs"
     )
-    @CrossOrigin("*")
+    @CrossOrigin(
+            value = "*", allowCredentials = "false"
+    )
     public ResponseEntity<?> updateProjectDocs(
             @Parameter(description = "The slug of the project to get docs for.")
             @Pattern(regexp = Project.PATTERN)

@@ -25,6 +25,7 @@
 package net.william278.backend.configuration;
 
 import lombok.RequiredArgsConstructor;
+import net.william278.backend.database.model.Project;
 import net.william278.backend.security.DiscordOAuthUserService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -65,6 +66,13 @@ public class DiscordOAuthConfiguration {
                     final CookieCsrfTokenRepository repo = new CookieCsrfTokenRepository();
                     repo.setCookieCustomizer(cookie -> cookie.domain(config.getCookieDomain()).build());
                     c.csrfTokenRepository(repo);
+
+                    // Ignore webhook endpoint
+                    c.ignoringRequestMatchers(new AntPathRequestMatcher(
+                            "/v1/projects/{projectName:" + Project.PATTERN + "}/docs",
+                            "POST", false
+                    ));
+
                 })
                 .cors(c -> {
                     final CorsConfiguration cors = new CorsConfiguration();
