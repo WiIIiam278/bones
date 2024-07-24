@@ -39,6 +39,8 @@ import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
@@ -66,6 +68,7 @@ public class DiscordRolesService {
         this.users = users;
     }
 
+    @Transactional(propagation = Propagation.REQUIRED, readOnly = true, noRollbackFor = Exception.class)
     public void updateMemberRoles(@NotNull User user, @NotNull String accessToken) {
         final Request request = new Request.Builder()
                 .url(API_URL + ENDPOINT.formatted(guildId))

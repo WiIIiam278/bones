@@ -46,7 +46,6 @@ spring:
     password: ${MYSQL_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
-
   # Configure Discord OAuth2
   security:
     oauth2:
@@ -103,12 +102,16 @@ springdoc:
     operations-sorter: "alpha"
     path: "/docs/"
 
-# Hides the Whitelabel error page
+# Server configuration
 server:
+  port: ${PORT}
+
+  # Hide whitelabel error page (we supply errors in a JSON format)
   error:
     whitelabel:
       enabled: false
-  port: ${PORT}
+
+  # Send cookies with a specific domain target
   servlet:
     session:
       cookie:
