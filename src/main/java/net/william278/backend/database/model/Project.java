@@ -29,6 +29,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
+import jakarta.transaction.Transactional;
 import lombok.*;
 import net.william278.backend.service.StatsService;
 import org.hibernate.validator.constraints.Length;
@@ -119,6 +120,7 @@ public class Project implements Comparable<Project> {
     @JsonSerialize
     @Unmodifiable
     @SuppressWarnings("unused")
+    @Transactional
     public Set<String> getReleaseChannels() {
         return releaseChannels.stream().map(Channel::getName).collect(Collectors.toSet());
     }
