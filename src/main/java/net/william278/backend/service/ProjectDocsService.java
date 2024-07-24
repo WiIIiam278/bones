@@ -29,6 +29,7 @@ import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.controller.v1.DocsController;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.repository.ProjectRepository;
+import net.william278.backend.exception.DocsPageNotFound;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.jetbrains.annotations.NotNull;
@@ -85,7 +86,7 @@ public class ProjectDocsService {
     }
 
     @NotNull
-    public Map<String, String> getPages(@NotNull Project project) {
+    public Map<String, String> getPages(@NotNull Project project) throws DocsPageNotFound {
         if (!this.wikis.containsKey(project.getSlug())) {
             return Map.of();
         }
@@ -93,7 +94,7 @@ public class ProjectDocsService {
         // Find all files in the project's docs directory
         final File[] files = getProjectPath(project).toFile().listFiles((dir, name) -> name.endsWith(".md"));
         if (files == null || files.length == 0) {
-            return Map.of();
+            throw new DocsPageNotFound();
         }
 
         // Return the file names

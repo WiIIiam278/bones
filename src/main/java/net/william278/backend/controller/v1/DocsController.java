@@ -150,7 +150,7 @@ public class DocsController {
         }
 
         // Resolve project
-        final Project project = projects.findById(projectSlug).orElseThrow(InvalidProject::new);
+        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
         if (!project.getMetadata().isDocumentation()) {
             throw new UndocumentedProject();
         }
@@ -202,7 +202,11 @@ public class DocsController {
             @SuppressWarnings("unused")
             @WebhookPayload @RequestBody String payload
     ) {
-        final Project project = projects.findById(projectSlug).orElseThrow(InvalidProject::new);
+        if (projectSlug.isBlank() || !projectSlug.matches(Project.PATTERN)) {
+            throw new InvalidProject();
+        }
+
+        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
         if (!project.getMetadata().isDocumentation()) {
             throw new UndocumentedProject();
         }

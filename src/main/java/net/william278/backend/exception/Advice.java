@@ -24,23 +24,16 @@
 
 package net.william278.backend.exception;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.validation.constraints.NotNull;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+@SuppressWarnings("unused")
 @ControllerAdvice
 class Advice {
-    private final ObjectMapper json;
-
-    @Autowired
-    private Advice(final ObjectMapper json) {
-        this.json = json;
-    }
 
     @ExceptionHandler(DownloadFailed.class)
     @ResponseBody
@@ -56,7 +49,7 @@ class Advice {
 
     @ExceptionHandler(DownloadNotFound.class)
     @ResponseBody
-    public ResponseEntity<?> downloadNotFound(final ChannelNotFound exception) {
+    public ResponseEntity<?> downloadNotFound(final DownloadNotFound exception) {
         return this.error(HttpStatus.NOT_FOUND, "Download not found.");
     }
 
@@ -112,6 +105,12 @@ class Advice {
     @ResponseBody
     public ResponseEntity<?> invalidRole(final InvalidRole exception) {
         return this.error(HttpStatus.BAD_REQUEST, "Invalid role.");
+    }
+
+    @ExceptionHandler(InvalidProject.class)
+    @ResponseBody
+    public ResponseEntity<?> invalidProject(final InvalidProject exception) {
+        return this.error(HttpStatus.BAD_REQUEST, "Invalid project.");
     }
 
     @ExceptionHandler(UndocumentedProject.class)
