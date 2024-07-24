@@ -24,7 +24,7 @@
 
 spring:
   application:
-    name: william278-backend
+    name: bones
 
   # Production or staging
   profiles:
