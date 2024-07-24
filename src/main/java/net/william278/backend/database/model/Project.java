@@ -152,6 +152,14 @@ public class Project implements Comparable<Project> {
         return Integer.compare(getMetadata().getSortWeight(), o.getMetadata().getSortWeight());
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof Project other) {
+            return slug.equals(other.slug);
+        }
+        return super.equals(obj);
+    }
+
     @Schema(
             name = "Metadata",
             description = "Metadata for a project."
@@ -218,6 +226,7 @@ public class Project implements Comparable<Project> {
                 example = "HuskHomes is a lightweight, fast and feature-rich homes plugin. (...)"
         )
         @Nullable
+        @Builder.Default
         private String readmeBody = null;
 
         @Schema(
@@ -242,6 +251,7 @@ public class Project implements Comparable<Project> {
                 requiredMode = Schema.RequiredMode.NOT_REQUIRED
         )
         @Nullable
+        @Builder.Default
         private BigDecimal suggestedRetailPrice = null;
 
         @Schema(
@@ -251,6 +261,7 @@ public class Project implements Comparable<Project> {
         )
         @Length(max = 18)
         @Nullable
+        @Builder.Default
         private String linkedDiscordRole = null;
 
         @Schema(

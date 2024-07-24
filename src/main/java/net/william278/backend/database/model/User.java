@@ -62,6 +62,7 @@ public class User implements OAuth2User {
             name = "createdAt",
             description = "When the user created their account."
     )
+    @Builder.Default
     private Instant createdAt = Instant.now();
 
     @Schema(
@@ -169,6 +170,14 @@ public class User implements OAuth2User {
     @Unmodifiable
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return List.of((GrantedAuthority) () -> "DISCORD");
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj instanceof User other) {
+            return id.equals(other.id);
+        }
+        return super.equals(obj);
     }
 
     @Schema(
