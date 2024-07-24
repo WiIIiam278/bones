@@ -1,4 +1,5 @@
-# William278.net Backend
+# Bones
+#### Backend API for William278.net
 
 Source for the backend API for William278.net, providing a Discord OAuth account integration and project downloads.
 Licensed under MIT &ndash; feel free to fork and customize for your own needs.
