@@ -116,3 +116,4 @@ server:
     session:
       cookie:
         domain: ${COOKIE_DOMAIN}
+      timeout: ${SESSION_TIMEOUT}
