@@ -34,6 +34,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.extern.slf4j.Slf4j;
 import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.*;
 import net.william278.backend.database.repository.ChannelRepository;
@@ -55,6 +56,7 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.util.concurrent.CompletableFuture;
 
+@Slf4j
 @RestController
 @Tags(value = @Tag(name = "Downloads"))
 @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -168,6 +170,7 @@ public class DownloadController {
         try {
             return new DownloadArchive(version.getDownloadPathFor(distribution, this.configuration), CACHE);
         } catch (Throwable e) {
+            log.warn("Failed to serve download version archive", e);
             throw new DownloadFailed();
         }
     }

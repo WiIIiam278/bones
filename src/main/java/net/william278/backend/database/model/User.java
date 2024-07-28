@@ -149,7 +149,7 @@ public class User implements OAuth2User {
     }
 
     public boolean hasProjectPermission(@NotNull Project project) {
-        return isStaff() || purchases.contains(project);
+        return isStaff() || purchases.stream().anyMatch(p -> p.getSlug().equals(project.getSlug()));
     }
 
     @JsonIgnore
