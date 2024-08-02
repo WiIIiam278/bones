@@ -90,6 +90,7 @@ app:
   cookie-domain: ${COOKIE_DOMAIN}
   github-webhook-secret: ${GITHUB_WEBHOOK_SECRET}
   default-doc-locale: ${DEFAULT_DOC_LOCALE}
+  cookie-max-age-days: ${SESSION_TIMEOUT_DAYS}
 
 # Provide OpenAPI docs
 springdoc:
@@ -116,4 +117,5 @@ server:
     session:
       cookie:
         domain: ${COOKIE_DOMAIN}
-      timeout: ${SESSION_TIMEOUT}
+        max-age: ${SESSION_TIMEOUT_DAYS}d
+      timeout: ${SESSION_TIMEOUT_DAYS}d

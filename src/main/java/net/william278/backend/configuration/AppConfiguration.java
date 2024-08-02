@@ -43,6 +43,7 @@ public class AppConfiguration {
 
     private String defaultAdminDiscordId;
     private String cookieDomain;
+    private long cookieMaxAgeDays;
 
     private URL apiBaseUrl;
     private URL frontendBaseUrl;

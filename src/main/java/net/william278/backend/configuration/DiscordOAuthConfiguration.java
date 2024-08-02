@@ -65,7 +65,10 @@ public class DiscordOAuthConfiguration {
                     c.csrfTokenRequestHandler(handler);
 
                     final CookieCsrfTokenRepository repo = new CookieCsrfTokenRepository();
-                    repo.setCookieCustomizer(cookie -> cookie.domain(config.getCookieDomain()).build());
+                    repo.setCookieCustomizer(cookie -> cookie
+                            .domain(config.getCookieDomain())
+                            .maxAge(config.getCookieMaxAgeDays() * 24 * 60 * 60)
+                            .build());
                     c.csrfTokenRepository(repo);
 
                     // Ignore webhook endpoint
@@ -126,6 +129,7 @@ public class DiscordOAuthConfiguration {
         serializer.setCookieName("JSESSIONID");
         serializer.setCookiePath("/");
         serializer.setDomainName(config.getCookieDomain());
+        serializer.setCookieMaxAge(((int) config.getCookieMaxAgeDays()) * 24 * 60 * 60);
         return serializer;
     }
 
