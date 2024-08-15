@@ -57,7 +57,7 @@ public class Download {
             name = "distribution",
             description = "The distribution this download is associated with."
     )
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     private Distribution distribution;
 
     @Schema(

@@ -60,11 +60,11 @@ public class Version {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JsonIgnore
     private Project project;
 
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @JsonIgnore
     private Channel channel;
 
@@ -97,7 +97,7 @@ public class Version {
             description = "The downloads associated with this version.",
             minLength = 1
     )
-    @OneToMany
+    @OneToMany(cascade = CascadeType.ALL)
     private List<Download> downloads;
 
     @Schema(

@@ -55,7 +55,7 @@ public class User implements OAuth2User {
     @Id
     @Schema(
             name = "id",
-            description = "The user's unique ID."
+            description = "The user's Discord snowflake ID."
     )
     private String id;
 
@@ -76,6 +76,7 @@ public class User implements OAuth2User {
             name = "email",
             description = "The user's email address."
     )
+    @Nullable
     private String email;
 
     @JsonIgnore
@@ -90,7 +91,7 @@ public class User implements OAuth2User {
     private Role role = Role.USER;
 
     @Builder.Default
-    @ManyToMany(fetch = FetchType.EAGER)
+    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(
             name = "purchases",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -159,7 +160,7 @@ public class User implements OAuth2User {
         return Map.of(
                 "id", id,
                 "username", name,
-                "email", email,
+                "email", email == null ? "" : email,
                 "avatar", getAvatar(),
                 "projects", purchases,
                 "role", role
