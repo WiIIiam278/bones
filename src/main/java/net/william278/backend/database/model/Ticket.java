@@ -57,7 +57,7 @@ public class Ticket {
     private Long id;
 
     @Schema(
-            name = "client",
+            name = "user",
             description = "The user who created the ticket"
     )
     @ManyToOne
@@ -67,11 +67,14 @@ public class Ticket {
     private User user;
 
     @Schema(
-            name = "guildId",
-            description = "Snowflake ID of the guild."
+            name = "guild",
+            description = "The guild the ticket was created on"
     )
-    @Length(max = 22)
-    private String guildId;
+    @ManyToOne
+    @OnDelete(action = OnDeleteAction.SET_NULL)
+    @JoinColumn
+    @Nullable
+    private Guild guild;
 
     @Schema(
             name = "channel",

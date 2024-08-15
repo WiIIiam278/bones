@@ -57,18 +57,18 @@ public class DiscordRolesService {
     private final OkHttpClient client = HTTPUtils.createClient();
     private final ObjectMapper mapper = new ObjectMapper();
     private final ProjectRepository projects;
-    private final String guildId;
+    private final String rolesGuildId;
 
     @Autowired
     public DiscordRolesService(AppConfiguration config, ProjectRepository projects) {
-        this.guildId = config.getDiscordGuildId();
+        this.rolesGuildId = config.getDiscordGuildId();
         this.projects = projects;
     }
 
     @Transactional(propagation = Propagation.REQUIRED, readOnly = true, noRollbackFor = Exception.class)
     public User updateMemberRoles(@NotNull User user, @NotNull String accessToken) {
         final Request request = new Request.Builder()
-                .url(API_URL + ENDPOINT.formatted(guildId))
+                .url(API_URL + ENDPOINT.formatted(rolesGuildId))
                 .header("Authorization", "Bearer %s".formatted(accessToken))
                 .build();
         try (Response response = client.newCall(request).execute()) {
