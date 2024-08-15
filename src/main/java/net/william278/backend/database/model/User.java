@@ -91,7 +91,7 @@ public class User implements OAuth2User {
     private Role role = Role.USER;
 
     @Builder.Default
-    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "purchases",
             joinColumns = @JoinColumn(name = "user_id"),
