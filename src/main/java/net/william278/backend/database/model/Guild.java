@@ -32,6 +32,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.ColumnDefault;
 
 @Schema(
         name = "Guild",
@@ -56,6 +57,7 @@ public class Guild {
             name = "latestTicketId",
             description = "Number of the last opened ticket in this guild"
     )
-    private long latestTicketId;
+    @ColumnDefault(value = "0")
+    private long latestTicketId = 0;
 
 }
