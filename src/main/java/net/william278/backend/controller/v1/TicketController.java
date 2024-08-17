@@ -73,7 +73,7 @@ public class TicketController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @CrossOrigin
-    public Page<Ticket> findPaginated(
+    public Page<Ticket> findPaginatedForLoggedIn(
             @AuthenticationPrincipal User principal,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "15") int size
@@ -81,7 +81,7 @@ public class TicketController {
         if (principal == null) {
             throw new NotAuthenticated();
         }
-        return tickets.findAllByUserOrderByOpenDate(principal, PageRequest.of(page, size));
+        return tickets.findAllByUserOrderByOpenDateDesc(principal, PageRequest.of(page, size));
     }
 
     @Operation(
@@ -119,7 +119,40 @@ public class TicketController {
             throw new NoPermission();
         }
         final User user = users.findById(userId).orElseThrow(UserNotFound::new);
-        return tickets.findAllByUserOrderByOpenDate(user, PageRequest.of(page, size));
+        return tickets.findAllByUserOrderByOpenDateDesc(user, PageRequest.of(page, size));
+    }
+
+    @Operation(
+            summary = "Get a paginated list of all tickets",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @GetMapping(
+            value = "/v1/tickets",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user is not a member of staff.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @CrossOrigin
+    public Page<Ticket> findPaginated(
+            @AuthenticationPrincipal User principal,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "15") int size
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        if (!principal.isStaff()) {
+            throw new NoPermission();
+        }
+        return tickets.findAllByOrderByOpenDateDesc(PageRequest.of(page, size));
     }
 
     @Operation(

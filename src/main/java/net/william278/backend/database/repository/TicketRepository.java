@@ -34,6 +34,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TicketRepository extends JpaRepository<Ticket, String> {
 
     @NotNull
-    Page<Ticket> findAllByUserOrderByOpenDate(@NotNull User user, @NotNull Pageable pageable);
+    Page<Ticket> findAllByOrderByOpenDateDesc(@NotNull Pageable pageable);
+
+    @NotNull
+    Page<Ticket> findAllByUserOrderByOpenDateDesc(@NotNull User user, @NotNull Pageable pageable);
 
 }
