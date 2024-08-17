@@ -26,6 +26,7 @@ package net.william278.backend.service;
 
 import io.minio.GetPresignedObjectUrlArgs;
 import io.minio.MinioClient;
+import io.minio.RemoveObjectArgs;
 import io.minio.errors.*;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
@@ -60,15 +61,32 @@ public class TicketTranscriptsService {
             return Optional.of(client.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                     .expiry(Integer.parseInt(config.getTicketBucketsExpiryTime()))
                     .bucket(config.getTicketBucketsBucket())
-                    .object(String.format("ticket-%s".formatted(ticketNumber)))
+                    .object(getTicketObjectName(ticketNumber))
                     .method(Method.GET)
                     .build()));
         } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
                  InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
                  ServerException e) {
-            log.error("Failed to fetch ticket transcript", e);
+            log.warn("Failed to fetch ticket transcript #{}", ticketNumber, e);
         }
         return Optional.empty();
+    }
+
+    public void deleteTranscript(long ticketNumber) {
+        try {
+            client.removeObject(RemoveObjectArgs.builder()
+                    .bucket(config.getTicketBucketsBucket())
+                    .object(getTicketObjectName(ticketNumber))
+                    .build());
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
+                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
+                 ServerException e) {
+            log.warn("Failed to delete ticket transcript #{}", ticketNumber, e);
+        }
+    }
+
+    private String getTicketObjectName(long ticketNumber) {
+        return String.format("ticket-%04d".formatted(ticketNumber));
     }
 
 }

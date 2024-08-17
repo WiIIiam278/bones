@@ -41,6 +41,7 @@ import net.william278.backend.service.TicketTranscriptsService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -60,31 +61,6 @@ public class TicketController {
     }
 
     @Operation(
-            summary = "Get a paginated list of the logged-in user's support tickets.",
-            security = @SecurityRequirement(name = "OAuth2")
-    )
-    @GetMapping(
-            value = "/v1/users/@me/tickets",
-            produces = {MediaType.APPLICATION_JSON_VALUE}
-    )
-    @ApiResponse(
-            responseCode = "401",
-            description = "The user is not logged in.",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-    )
-    @CrossOrigin
-    public Page<Ticket> findPaginatedForLoggedIn(
-            @AuthenticationPrincipal User principal,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "15") int size
-    ) {
-        if (principal == null) {
-            throw new NotAuthenticated();
-        }
-        return tickets.findAllByUserOrderByOpenDateDesc(principal, PageRequest.of(page, size));
-    }
-
-    @Operation(
             summary = "Get a paginated list of a user by ID's support tickets.",
             security = @SecurityRequirement(name = "OAuth2")
     )
@@ -99,11 +75,11 @@ public class TicketController {
     )
     @ApiResponse(
             responseCode = "403",
-            description = "The user is not a staff member.",
+            description = "The user is not a staff member and is trying to access someone else's tickets.",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @CrossOrigin
-    public Page<Ticket> findPaginatedForUserById(
+    public Page<Ticket> findPaginatedByUser(
             @AuthenticationPrincipal User principal,
 
             @Parameter(description = "The ID of the user to get tickets for.")
@@ -115,10 +91,11 @@ public class TicketController {
         if (principal == null) {
             throw new NotAuthenticated();
         }
-        if (!principal.isStaff()) {
+
+        final User user = users.findById(userId).orElseThrow(UserNotFound::new);
+        if (!user.equals(principal) && !principal.isStaff()) {
             throw new NoPermission();
         }
-        final User user = users.findById(userId).orElseThrow(UserNotFound::new);
         return tickets.findAllByUserOrderByOpenDateDesc(user, PageRequest.of(page, size));
     }
 
@@ -156,6 +133,81 @@ public class TicketController {
     }
 
     @Operation(
+            summary = "Get a ticket",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @DeleteMapping(
+            value = "/v1/tickets/{ticketNumber}"
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user isn't the ticket creator, or a staff member.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @CrossOrigin
+    public Ticket getTicket(
+            @AuthenticationPrincipal User principal,
+
+            @Parameter(description = "The number of the ticket to get")
+            @PathVariable String ticketNumber
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        final Ticket ticket = tickets.findById(ticketNumber).orElseThrow(TicketNotFound::new);
+        if (!(ticket.getUser() != null && ticket.getUser().equals(principal)) || !principal.isAdmin()) {
+            throw new NoPermission();
+        }
+
+        return ticket;
+    }
+
+    @Operation(
+            summary = "Delete a ticket",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @DeleteMapping(
+            value = "/v1/tickets/{ticketNumber}"
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user isn't the ticket creator, or an admin.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @CrossOrigin
+    public ResponseEntity<?> deleteTicket(
+            @AuthenticationPrincipal User principal,
+
+            @Parameter(description = "The number of the ticket to delete")
+            @PathVariable String ticketNumber
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+
+        final Ticket ticket = tickets.findById(ticketNumber).orElseThrow(TicketNotFound::new);
+        if (!(ticket.getUser() != null && ticket.getUser().equals(principal)) || !principal.isAdmin()) {
+            throw new NoPermission();
+        }
+
+        // Delete ticket transcript
+        transcripts.deleteTranscript(ticket.getId());
+        tickets.delete(ticket);
+
+        return ResponseEntity.ok().build();
+    }
+
+    @Operation(
             summary = "Get the URL of a ticket transcript",
             security = @SecurityRequirement(name = "OAuth2")
     )
@@ -170,7 +222,7 @@ public class TicketController {
     )
     @ApiResponse(
             responseCode = "403",
-            description = "The user does not have access to that ticket.",
+            description = "The user isn't the ticket creator, or a staff member.",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @CrossOrigin
