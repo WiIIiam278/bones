@@ -127,7 +127,7 @@ public class TicketController {
             security = @SecurityRequirement(name = "OAuth2")
     )
     @GetMapping(
-            value = "/v1/tickets/{ticketNumber}",
+            value = "/v1/tickets/{ticketNumber}/transcript",
             produces = {MediaType.TEXT_PLAIN_VALUE}
     )
     @ApiResponse(
