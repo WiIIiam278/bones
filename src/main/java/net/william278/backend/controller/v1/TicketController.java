@@ -136,7 +136,7 @@ public class TicketController {
             summary = "Get a ticket",
             security = @SecurityRequirement(name = "OAuth2")
     )
-    @DeleteMapping(
+    @GetMapping(
             value = "/v1/tickets/{ticketNumber}"
     )
     @ApiResponse(
