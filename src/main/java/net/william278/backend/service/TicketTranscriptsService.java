@@ -59,8 +59,9 @@ public class TicketTranscriptsService {
         try {
             return Optional.of(client.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                     .expiry(Integer.parseInt(config.getTicketBucketsExpiryTime()))
-                    .method(Method.GET)
                     .bucket(config.getTicketBucketsBucket())
+                    .object(String.format("ticket-%s".formatted(ticketNumber)))
+                    .method(Method.GET)
                     .build()));
         } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
                  InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
