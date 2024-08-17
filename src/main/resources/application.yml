@@ -91,6 +91,11 @@ app:
   github-webhook-secret: ${GITHUB_WEBHOOK_SECRET}
   default-doc-locale: ${DEFAULT_DOC_LOCALE}
   cookie-max-age-days: ${SESSION_TIMEOUT_DAYS}
+  tickets-bucket-endpoint: ${TICKET_BUCKETS_ENDPOINT}
+  tickets-bucket-bucket: ${TICKET_BUCKETS_BUCKET}
+  tickets-bucket-access-key: ${TICKET_BUCKETS_ACCESS_KEY}
+  tickets-bucket-secret-key: ${TICKET_BUCKETS_SECRET_KEY}
+  ticket-buckets-expiry-time: ${TICKET_BUCKETS_EXPIRY_TIME}
 
 # Provide OpenAPI docs
 springdoc:

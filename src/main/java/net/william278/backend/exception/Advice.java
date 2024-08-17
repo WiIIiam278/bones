@@ -95,6 +95,12 @@ class Advice {
         return this.error(HttpStatus.NOT_FOUND, "User not found.");
     }
 
+    @ExceptionHandler(TicketNotFound.class)
+    @ResponseBody
+    public ResponseEntity<?> ticketNotFound(final TicketNotFound exception) {
+        return this.error(HttpStatus.NOT_FOUND, "Ticket not found.");
+    }
+
     @ExceptionHandler(NoHandlerFoundException.class)
     @ResponseBody
     public ResponseEntity<?> endpointNotFound(final NoHandlerFoundException exception) {

@@ -61,4 +61,10 @@ public class AppConfiguration {
     private String githubWebhookSecret;
     private String discordGuildId;
 
+    private String ticketsBucketEndpoint;
+    private String ticketBucketsBucket;
+    private String ticketsBucketAccessKey;
+    private String ticketsBucketSecretKey;
+    private String ticketBucketsExpiryTime;
+
 }

@@ -36,10 +36,8 @@ import net.william278.backend.database.model.Ticket;
 import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.TicketRepository;
 import net.william278.backend.database.repository.UsersRepository;
-import net.william278.backend.exception.ErrorResponse;
-import net.william278.backend.exception.NoPermission;
-import net.william278.backend.exception.NotAuthenticated;
-import net.william278.backend.exception.UserNotFound;
+import net.william278.backend.exception.*;
+import net.william278.backend.service.TicketTranscriptsService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -53,10 +51,12 @@ public class TicketController {
 
     private final TicketRepository tickets;
     private final UsersRepository users;
+    private final TicketTranscriptsService transcripts;
 
-    public TicketController(TicketRepository tickets, UsersRepository users) {
+    public TicketController(TicketRepository tickets, UsersRepository users, TicketTranscriptsService transcripts) {
         this.tickets = tickets;
         this.users = users;
+        this.transcripts = transcripts;
     }
 
     @Operation(
@@ -121,5 +121,43 @@ public class TicketController {
         final User user = users.findById(userId).orElseThrow(UserNotFound::new);
         return tickets.findAllByUserOrderByOpenDate(user, PageRequest.of(page, size));
     }
+
+    @Operation(
+            summary = "Get the URL of a ticket transcript",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @GetMapping(
+            value = "/v1/tickets/{ticketNumber}",
+            produces = {MediaType.TEXT_PLAIN_VALUE}
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user does not have access to that ticket.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @CrossOrigin
+    public String getTranscriptUrl(
+            @AuthenticationPrincipal User principal,
+
+            @Parameter(description = "The number of the ticket to get a transcript for")
+            @PathVariable String ticketNumber
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+
+        final Ticket ticket = tickets.findById(ticketNumber).orElseThrow(TicketNotFound::new);
+        if (!(ticket.getUser() != null && ticket.getUser().equals(principal)) || !principal.isStaff()) {
+            throw new NoPermission();
+        }
+
+        return transcripts.getTranscriptUrl(ticket.getId()).orElseThrow(TicketNotFound::new);
+    }
+
 
 }
