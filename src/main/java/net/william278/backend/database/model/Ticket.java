@@ -33,6 +33,7 @@ import lombok.NoArgsConstructor;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 import org.hibernate.validator.constraints.Length;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
@@ -125,5 +126,16 @@ public class Ticket {
     )
     @Nullable
     private Instant closeDate;
+
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public boolean canUserAccess(@NotNull User accessor) {
+        if (accessor.isStaff()) {
+            return true;
+        }
+        if (getUser() == null) {
+            return false;
+        }
+        return getUser().equals(accessor);
+    }
 
 }

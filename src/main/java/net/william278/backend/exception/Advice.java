@@ -101,6 +101,12 @@ class Advice {
         return this.error(HttpStatus.NOT_FOUND, "Ticket not found.");
     }
 
+    @ExceptionHandler(TicketNotClosed.class)
+    @ResponseBody
+    public ResponseEntity<?> ticketNotClosed(final TicketNotClosed exception) {
+        return this.error(HttpStatus.NOT_FOUND, "Ticket not closed.");
+    }
+
     @ExceptionHandler(NoHandlerFoundException.class)
     @ResponseBody
     public ResponseEntity<?> endpointNotFound(final NoHandlerFoundException exception) {

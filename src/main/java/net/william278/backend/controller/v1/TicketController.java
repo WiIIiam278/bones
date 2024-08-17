@@ -159,8 +159,9 @@ public class TicketController {
         if (principal == null) {
             throw new NotAuthenticated();
         }
+
         final Ticket ticket = tickets.findById(ticketNumber).orElseThrow(TicketNotFound::new);
-        if (!(ticket.getUser() != null && ticket.getUser().equals(principal)) || !principal.isAdmin()) {
+        if (!ticket.canUserAccess(principal)) {
             throw new NoPermission();
         }
 
@@ -168,7 +169,7 @@ public class TicketController {
     }
 
     @Operation(
-            summary = "Delete a ticket",
+            summary = "Delete a closed ticket",
             security = @SecurityRequirement(name = "OAuth2")
     )
     @DeleteMapping(
@@ -177,6 +178,11 @@ public class TicketController {
     @ApiResponse(
             responseCode = "401",
             description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "400",
+            description = "The ticket is not closed.",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @ApiResponse(
@@ -196,8 +202,11 @@ public class TicketController {
         }
 
         final Ticket ticket = tickets.findById(ticketNumber).orElseThrow(TicketNotFound::new);
-        if (!(ticket.getUser() != null && ticket.getUser().equals(principal)) || !principal.isAdmin()) {
+        if (!ticket.canUserAccess(principal)) {
             throw new NoPermission();
+        }
+        if (!ticket.getStatus().equals("2")) {
+            throw new TicketNotClosed();
         }
 
         // Delete ticket transcript
@@ -237,7 +246,7 @@ public class TicketController {
         }
 
         final Ticket ticket = tickets.findById(ticketNumber).orElseThrow(TicketNotFound::new);
-        if (!(ticket.getUser() != null && ticket.getUser().equals(principal)) || !principal.isStaff()) {
+        if (!ticket.canUserAccess(principal)) {
             throw new NoPermission();
         }
 
