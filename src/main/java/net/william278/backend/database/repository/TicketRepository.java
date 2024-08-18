@@ -34,9 +34,30 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface TicketRepository extends JpaRepository<Ticket, String> {
 
     @NotNull
-    Page<Ticket> findAllByOrderByOpenDateDesc(@NotNull Pageable pageable);
+    Page<Ticket> findAllByIdOrderByIdDesc(@NotNull Long id, @NotNull Pageable pageable);
 
     @NotNull
-    Page<Ticket> findAllByUserOrderByOpenDateDesc(@NotNull User user, @NotNull Pageable pageable);
+    Page<Ticket> findAllByIdAndStatusOrderByIdDesc(@NotNull Long id, @NotNull String status,
+                                                   @NotNull Pageable pageable);
+
+    @NotNull
+    Page<Ticket> findAllByUserAndIdOrderByIdDesc(@NotNull User user, @NotNull Long id, @NotNull Pageable pageable);
+
+    @NotNull
+    Page<Ticket> findAllByUserAndIdAndStatusOrderByIdDesc(@NotNull User user, @NotNull Long id, @NotNull String status,
+                                                          @NotNull Pageable pageable);
+
+    @NotNull
+    Page<Ticket> findAllByOrderByIdDesc(@NotNull Pageable pageable);
+
+    @NotNull
+    Page<Ticket> findAllByStatusOrderByIdDesc(@NotNull String status, @NotNull Pageable pageable);
+
+    @NotNull
+    Page<Ticket> findAllByUserOrderByIdDesc(@NotNull User user, @NotNull Pageable pageable);
+
+    @NotNull
+    Page<Ticket> findAllByUserAndStatusOrderByIdDesc(@NotNull User user, @NotNull String status,
+                                                     @NotNull Pageable pageable);
 
 }

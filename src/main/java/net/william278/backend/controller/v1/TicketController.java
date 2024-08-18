@@ -86,7 +86,10 @@ public class TicketController {
             @PathVariable String userId,
 
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "15") int size
+            @RequestParam(value = "size", defaultValue = "15") int size,
+
+            @RequestParam(value = "idFilter", required = false) Long idFilter,
+            @RequestParam(value = "statusFilter", required = false) Integer statusFilter
     ) {
         if (principal == null) {
             throw new NotAuthenticated();
@@ -96,7 +99,18 @@ public class TicketController {
         if (!user.equals(principal) && !principal.isStaff()) {
             throw new NoPermission();
         }
-        return tickets.findAllByUserOrderByOpenDateDesc(user, PageRequest.of(page, size));
+
+        // Filter and return
+        final PageRequest pageReq = PageRequest.of(page, size);
+        if (idFilter != null) {
+            if (statusFilter != null) {
+                return tickets.findAllByUserAndIdAndStatusOrderByIdDesc(user, idFilter, String.valueOf(statusFilter), pageReq);
+            }
+            return tickets.findAllByUserAndIdOrderByIdDesc(user, idFilter, pageReq);
+        } else if (statusFilter != null) {
+            return tickets.findAllByUserAndStatusOrderByIdDesc(user, String.valueOf(statusFilter), pageReq);
+        }
+        return tickets.findAllByUserOrderByIdDesc(user, pageReq);
     }
 
     @Operation(
@@ -120,8 +134,12 @@ public class TicketController {
     @CrossOrigin
     public Page<Ticket> findPaginated(
             @AuthenticationPrincipal User principal,
+
             @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "15") int size
+            @RequestParam(value = "size", defaultValue = "15") int size,
+
+            @RequestParam(value = "idFilter", required = false) Long idFilter,
+            @RequestParam(value = "statusFilter", required = false) Integer statusFilter
     ) {
         if (principal == null) {
             throw new NotAuthenticated();
@@ -129,7 +147,18 @@ public class TicketController {
         if (!principal.isStaff()) {
             throw new NoPermission();
         }
-        return tickets.findAllByOrderByOpenDateDesc(PageRequest.of(page, size));
+
+        // Filter and return
+        final PageRequest pageReq = PageRequest.of(page, size);
+        if (idFilter != null) {
+            if (statusFilter != null) {
+                return tickets.findAllByIdAndStatusOrderByIdDesc(idFilter, String.valueOf(statusFilter), pageReq);
+            }
+            return tickets.findAllByIdOrderByIdDesc(idFilter, pageReq);
+        } else if (statusFilter != null) {
+            return tickets.findAllByStatusOrderByIdDesc(String.valueOf(statusFilter), pageReq);
+        }
+        return tickets.findAllByOrderByIdDesc(PageRequest.of(page, size));
     }
 
     @Operation(
