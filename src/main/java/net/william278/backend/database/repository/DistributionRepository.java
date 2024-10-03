@@ -39,9 +39,9 @@ public interface DistributionRepository extends CrudRepository<Distribution, Int
     Optional<Distribution> findById(@NotNull Integer id);
 
     @NotNull
-    Optional<Distribution> findDistributionByNameAndProject(@NotNull String name, @NotNull Project project);
+    Optional<Distribution> findDistributionByNameAndProjectOrderBySortingWeightDesc(@NotNull String name, @NotNull Project project);
 
     @NotNull
-    List<Distribution> findDistributionsByProject(@NotNull Project project);
+    List<Distribution> findDistributionsByProjectOrderBySortingWeightDesc(@NotNull Project project);
 
 }

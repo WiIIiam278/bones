@@ -31,6 +31,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 @Schema(
@@ -43,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class Distribution {
+public class Distribution implements Comparable<Distribution> {
 
     public static final String PATTERN = "[a-z0-9._-]+";
 
@@ -101,9 +102,22 @@ public class Distribution {
     @Builder.Default
     private Boolean archived = false;
 
+    @Schema(
+            name = "sortingWeight",
+            description = "Weight used for sorting distributions",
+            example = "0",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
+    @Builder.Default
+    private long sortingWeight = 0;
+
     @SuppressWarnings("unused")
     public boolean isArchived() {
         return archived != null && archived;
     }
 
+    @Override
+    public int compareTo(@NotNull Distribution o) {
+        return Long.compare(sortingWeight, o.sortingWeight);
+    }
 }

@@ -147,7 +147,7 @@ public class VersionController {
     ) {
         final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
         final Channel channel = channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
-        final Distribution distribution = distributions.findDistributionByNameAndProject(distributionName, project)
+        final Distribution distribution = distributions.findDistributionByNameAndProjectOrderBySortingWeightDesc(distributionName, project)
                 .orElseThrow(DistributionNotFound::new);
 
         return versions.getAllByProjectAndChannelAndDownloadsDistributionOrderByTimestampDesc(
@@ -394,7 +394,7 @@ public class VersionController {
 
         // Set dist
         version.getDownloads().forEach(d -> d.setDistribution(
-                distributions.findDistributionByNameAndProject(d.getDistribution().getName(), project).orElseGet(() -> {
+                distributions.findDistributionByNameAndProjectOrderBySortingWeightDesc(d.getDistribution().getName(), project).orElseGet(() -> {
                     d.getDistribution().setProject(project);
                     return distributions.save(d.getDistribution());
                 })

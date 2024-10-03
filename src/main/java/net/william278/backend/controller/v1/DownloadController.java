@@ -146,7 +146,7 @@ public class DownloadController {
         final Channel channel = channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
         final Version version = versions.findByProjectAndChannelAndName(project, channel, versionName)
                 .orElseThrow(VersionNotFound::new);
-        final Distribution distribution = distributions.findDistributionByNameAndProject(distributionName, project)
+        final Distribution distribution = distributions.findDistributionByNameAndProjectOrderBySortingWeightDesc(distributionName, project)
                 .orElseThrow(DistributionNotFound::new);
 
         // Check the version has this distribution

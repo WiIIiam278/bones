@@ -81,7 +81,7 @@ public class DistributionController {
             @PathVariable String projectSlug
     ) {
         final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
-        return distributions.findDistributionsByProject(project);
+        return distributions.findDistributionsByProjectOrderBySortingWeightDesc(project);
     }
 
 }
