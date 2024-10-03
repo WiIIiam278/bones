@@ -88,8 +88,9 @@ public class Distribution {
             example = "Active",
             requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
+    @Nullable
     @Builder.Default
-    private String statusLabel = "Active";
+    private String statusLabel = null;
 
     @Schema(
             name = "archived",
