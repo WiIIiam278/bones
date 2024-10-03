@@ -83,6 +83,15 @@ public class Distribution {
     private String description = null;
 
     @Schema(
+            name = "statusLabel",
+            description = "A label indicating the status of the distribution.",
+            example = "Active",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
+    @Builder.Default
+    private String statusLabel = "Active";
+
+    @Schema(
             name = "archived",
             description = "Whether the distribution is archived and no longer active.",
             example = "false",
