@@ -128,12 +128,12 @@ public class User implements OAuth2User {
             description = "List of projects, by slug, that the user has subscribed to email notifications on"
     )
     public Set<String> getProjectEmailSubs() {
-        return purchases.stream().map(Project::getSlug).collect(Collectors.toSet());
+        return projectEmailSubs.stream().map(Project::getSlug).collect(Collectors.toSet());
     }
 
     public boolean setProjectEmailSubs(@NotNull Set<Project> projects) {
-        boolean changed = !this.purchases.equals(projects);
-        this.purchases = new HashSet<>(projects);
+        boolean changed = !this.projectEmailSubs.equals(projects);
+        this.projectEmailSubs = new HashSet<>(projects);
         return changed;
     }
 
