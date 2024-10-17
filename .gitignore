@@ -44,3 +44,7 @@ downloads/**
 docs/**
 *.jar
 *.md
+
+### Emails ###
+/src/main/resources/emails/node_modules
+/src/main/resources/emails/.react-email/

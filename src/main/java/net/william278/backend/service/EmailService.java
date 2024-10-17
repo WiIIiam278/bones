@@ -2,6 +2,7 @@ package net.william278.backend.service;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import com.google.common.io.Resources;
 import com.sendgrid.Method;
 import com.sendgrid.Request;
 import com.sendgrid.Response;
@@ -9,6 +10,8 @@ import com.sendgrid.SendGrid;
 import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
+import lombok.AllArgsConstructor;
+import lombok.SneakyThrows;
 import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.User;
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +22,11 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -99,16 +106,33 @@ public class EmailService {
                 sendFromEmail,
                 "Verify your email address for William278.net",
                 new Email(user.getEmail(), user.getName()),
-                new Content("text/plain", """
-                        Your verification code for William278.net is: %s
-                        
-                        Or, click here to verify your email: %s
-                        
-                        If you didn't request this email, please discard it. This code is valid for 24 hours."""
-                        .formatted(code, codeUrl))
+                new Content("text/html", MailTemplate.VERIFY_EMAIL.getTemplate(Map.of(
+                        "%%_USERNAME_%%", user.getName(),
+                        "%%_VERIFY_URL_%%", codeUrl,
+                        "%%_VERIFY_CODE_%%", code
+                )))
         );
         message.setReplyTo(replyToEmail);
         return message;
+    }
+
+    @AllArgsConstructor
+    public enum MailTemplate {
+        VERIFY_EMAIL("verify-email.html");
+
+        private final String file;
+
+        @SneakyThrows
+        public String getTemplate(@NotNull Map<String, String> placeholders) {
+            String template = Resources.toString(
+                    Resources.getResource("emails/out/%s".formatted(file)),
+                    StandardCharsets.UTF_8
+            );
+            for (Map.Entry<String, String> entry : placeholders.entrySet()) {
+                template = template.replace(entry.getKey(), entry.getValue());
+            }
+            return template;
+        }
     }
 
 }
