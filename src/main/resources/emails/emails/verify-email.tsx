@@ -75,12 +75,12 @@ const main = {
     color: "#f5f5f5",
     backgroundColor: "#222",
     fontFamily: "-apple-system,BlinkMacSystemFont,\"Segue UI\",sans-serif",
-    padding: "0 32px 0"
+    padding: "24px 0"
 };
 
 const container = {
     backgroundColor: "#333",
-    margin: "16px auto",
+    margin: "0 auto",
     padding: "0",
     borderRadius: "10px",
     boxShadow: "0 0 0.75rem rgba(0, 0, 0, 0.1)"
@@ -191,6 +191,7 @@ const footerCopyright = {
 }
 
 const footerAnchor = {
+    fontSize: "16px",
     color: "#00fb9a",
     margin: "0 6px"
 };
