@@ -32,18 +32,24 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.validation.constraints.Email;
+import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.database.repository.UsersRepository;
 import net.william278.backend.exception.*;
+import net.william278.backend.service.EmailService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.net.URI;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,11 +61,15 @@ public class UserController {
 
     private final UsersRepository users;
     private final ProjectRepository projects;
+    private final EmailService emailService;
+    private final AppConfiguration config;
 
     @Autowired
-    public UserController(UsersRepository users, ProjectRepository projects) {
+    public UserController(UsersRepository users, ProjectRepository projects, EmailService emailService, AppConfiguration config) {
         this.users = users;
         this.projects = projects;
+        this.emailService = emailService;
+        this.config = config;
     }
 
     @Operation(
@@ -325,6 +335,87 @@ public class UserController {
             throw new NotAuthenticated();
         }
         return principal;
+    }
+
+    @Operation(
+            summary = "Request an email verification code.",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The user with their updated email."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @PostMapping(
+            value = "/v1/users/@me/email",
+            produces = {MediaType.APPLICATION_JSON_VALUE},
+            consumes = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public User updateLoggedInUserEmail(
+            @AuthenticationPrincipal User principal,
+
+            @RequestBody
+            @Email
+            String email
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        principal.setEmail(email);
+        principal.setEmailVerified(false);
+        final User newUser = users.save(principal);
+        emailService.sendVerificationCodeEmail(principal);
+        return newUser;
+    }
+
+    @Operation(
+            summary = "Verify a user's email address with a code."
+    )
+    @ApiResponse(
+            responseCode = "302",
+            description = "The email was verified. Redirecting to the user's account page."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The email was verified."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The verification code is invalid",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @GetMapping(
+            value = "/v1/users/{userId}/email/{verificationCode}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public ResponseEntity<?> verifyUserEmail(
+            @Parameter(description = "The ID of the user to verify.")
+            @PathVariable String userId,
+
+            @Parameter(description = "The verification code to verify the user with.")
+            @PathVariable String verificationCode,
+
+            @Parameter(description = "Whether to redirect to the user's account page after verifying")
+            @RequestParam(value = "redirect", defaultValue = "true")
+            boolean redirect
+    ) {
+        if (!emailService.verifyEmail(verificationCode, userId)) {
+            throw new InvalidMailCode();
+        }
+        final User user = users.findById(userId).orElseThrow(UserNotFound::new);
+        user.setEmailVerified(true);
+        users.save(user);
+
+        if (!redirect) {
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(HttpStatus.FOUND)
+                .location(URI.create("%s/account/logout".formatted(config.getFrontendBaseUrl().toString())))
+                .build();
     }
 
     @Operation(

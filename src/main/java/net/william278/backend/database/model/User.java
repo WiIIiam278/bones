@@ -79,6 +79,23 @@ public class User implements OAuth2User {
     @Nullable
     private String email;
 
+    @Schema(
+            name = "emailVerified",
+            description = "Whether the user's email has been verified"
+    )
+    private boolean emailVerified;
+
+    @Builder.Default
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "project_email_subs",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "project_slug")
+    )
+    @Setter(AccessLevel.NONE)
+    @JsonIgnore
+    private Set<Project> projectEmailSubs = new HashSet<>();
+
     @JsonIgnore
     @Nullable
     private String avatar;
@@ -100,6 +117,25 @@ public class User implements OAuth2User {
     @Setter(AccessLevel.NONE)
     @JsonIgnore
     private Set<Project> purchases = new HashSet<>();
+
+    @SuppressWarnings("unused")
+    @JsonSerialize
+    @JsonAlias("projectEmailSubs")
+    @NotNull
+    @Unmodifiable
+    @Schema(
+            name = "projectEmailSubs",
+            description = "List of projects, by slug, that the user has subscribed to email notifications on"
+    )
+    public Set<String> getProjectEmailSubs() {
+        return purchases.stream().map(Project::getSlug).collect(Collectors.toSet());
+    }
+
+    public boolean setProjectEmailSubs(@NotNull Set<Project> projects) {
+        boolean changed = !this.purchases.equals(projects);
+        this.purchases = new HashSet<>(projects);
+        return changed;
+    }
 
     @SuppressWarnings("unused")
     @JsonSerialize

@@ -33,6 +33,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     implementation 'org.springframework.boot:spring-boot-starter-hateoas'
+
     implementation 'org.springframework.session:spring-session-core'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
@@ -42,10 +43,13 @@ dependencies {
     // Statistics clients
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'org.kohsuke:github-api:1.323'
-    implementation 'dev.masecla:Modrinth4J:2.0.0'
+    implementation 'dev.masecla:Modrinth4J:2.2.0'
 
     // Minio
     implementation 'io.minio:minio:8.5.11'
+
+    // Email
+    implementation 'com.sendgrid:sendgrid-java:4.10.1'
 
     // Git
     implementation 'org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r'

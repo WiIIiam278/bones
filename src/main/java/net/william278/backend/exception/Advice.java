@@ -85,7 +85,7 @@ class Advice {
 
     @ExceptionHandler(VersionNotFound.class)
     @ResponseBody
-    public ResponseEntity<?> versionNotFound(final VersionNotFound exception) {
+    public ResponseEntity<?> verificationCodeAlreadySent(final VersionNotFound exception) {
         return this.error(HttpStatus.NOT_FOUND, "Version not found.");
     }
 
@@ -141,6 +141,12 @@ class Advice {
     @ResponseBody
     public ResponseEntity<?> noPermission(final NoPermission exception) {
         return this.error(HttpStatus.FORBIDDEN, "You do not have permission to perform this action.");
+    }
+
+    @ExceptionHandler(InvalidMailCode.class)
+    @ResponseBody
+    public ResponseEntity<?> invalidMailCode(final InvalidMailCode exception) {
+        return this.error(HttpStatus.FORBIDDEN, "Invalid email verification code.");
     }
 
     @NotNull

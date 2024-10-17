@@ -75,7 +75,6 @@ public class DiscordOAuthUserService extends DefaultOAuth2UserService {
     private User updateUser(User user, OAuth2User oAuth2User) {
         user.setName(oAuth2User.getAttribute("username"));
         user.setAvatar(oAuth2User.getAttribute("avatar"));
-        user.setEmail(oAuth2User.getAttribute("email"));
         return user;
     }
 

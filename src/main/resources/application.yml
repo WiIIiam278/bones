@@ -70,6 +70,7 @@ spring:
             user-info-uri: https://discord.com/api/users/@me
             user-name-attribute: username
 
+  # Configure servlet file settings
   servlet:
     multipart:
       max-file-size: ${MAX_UPLOAD_SIZE}
@@ -96,6 +97,9 @@ app:
   tickets-bucket-secret-key: ${TICKETS_BUCKET_SECRET_KEY}
   ticket-buckets-expiry-time: ${TICKETS_BUCKET_EXPIRY_TIME}
   ticket-buckets-bucket: ${TICKETS_BUCKET_BUCKET}
+  sendgrid-api-key: ${SENDGRID_API_KEY}
+  send-email-from: ${SEND_EMAIL_FROM}
+  send-email-reply-to: ${SEND_EMAIL_REPLY_TO}
 
 # Provide OpenAPI docs
 springdoc:

@@ -28,10 +28,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 @Schema(
         name = "Channel",
@@ -41,8 +40,8 @@ import lombok.NoArgsConstructor;
 @Table(name = "channels")
 @Data
 @Builder
-@NoArgsConstructor
 @AllArgsConstructor
+@NoArgsConstructor
 public class Channel {
 
     public static final String PATTERN = "[a-z0-9._-]+";
@@ -55,5 +54,18 @@ public class Channel {
             description = "The lowercase channel name."
     )
     private String name;
+
+    @Schema(
+            name = "emailNotifications",
+            example = "true",
+            description = "Whether email subscribers should be notified when releases are uploaded to this channel"
+    )
+    @Builder.Default
+    private boolean emailNotifications = false;
+
+    public Channel(@NotNull String name) {
+        this.name = name;
+        this.emailNotifications = false;
+    }
 
 }
