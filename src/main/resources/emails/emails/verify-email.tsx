@@ -134,7 +134,7 @@ const verifyCode = {
     lineHeight: "20px",
     fontWeight: "bold",
     backgroundColor: "#191919",
-    padding: "20px",
+    padding: "16px 20px",
     margin: "0 auto",
     borderRadius: "10px",
     maxWidth: "250px",
@@ -145,13 +145,12 @@ const verifyDivider = {
 };
 
 const button = {
-    backgroundColor: "#00fb9a11",
-    boxShadow: "#00fb9a33 0 0 70px",
+    backgroundColor: "none",
     border: "3px solid #00fb9a",
     fontSize: "18px",
     lineHeight: "26px",
     color: "#00fb9a",
-    padding: "12px 20px 8px 20px",
+    padding: "10px 20px 6px 20px",
     borderRadius: "50px",
     fontWeight: "bold",
     textAlign: "center" as const
@@ -174,6 +173,7 @@ const footer = {
     alignItems: "center",
     textAlign: "center" as const,
     color: "#818181",
+    paddingTop: "8px",
     margin: "0 auto"
 };
 
