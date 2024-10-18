@@ -197,8 +197,10 @@ public class User implements OAuth2User {
                 "id", id,
                 "username", name,
                 "email", email == null ? "" : email,
+                "emailVerified", emailVerified,
                 "avatar", getAvatar(),
                 "projects", purchases,
+                "projectEmailSubs", projectEmailSubs,
                 "role", role
         );
     }

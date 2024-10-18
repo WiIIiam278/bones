@@ -100,6 +100,7 @@ app:
   sendgrid-api-key: ${SENDGRID_API_KEY}
   send-email-from: ${SEND_EMAIL_FROM}
   send-email-reply-to: ${SEND_EMAIL_REPLY_TO}
+  paypal-ipn-webhook-secret: ${PAYPAL_IPN_WEBHOOK_SECRET}
 
 # Provide OpenAPI docs
 springdoc:

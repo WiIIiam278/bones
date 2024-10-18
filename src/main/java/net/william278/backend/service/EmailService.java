@@ -13,6 +13,8 @@ import com.sendgrid.helpers.mail.objects.Email;
 import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 import net.william278.backend.configuration.AppConfiguration;
+import net.william278.backend.database.model.Project;
+import net.william278.backend.database.model.Transaction;
 import net.william278.backend.database.model.User;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -24,15 +26,14 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Service
 public class EmailService {
 
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy, H[H]:mm");
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private final Cache<String, String> verificationCodes;
     private final AppConfiguration config;
@@ -64,6 +65,14 @@ public class EmailService {
         verificationCodes.put(code, user.getId());
         this.sendEmail(createVerificationEmail(user, code));
         log.info("Sending verification code {} to {}", user.getId(), user.getEmail());
+    }
+
+    public void sendTransactionEmail(Transaction transaction) {
+        if (transaction.getProjectGrant() == null) {
+            return;
+        }
+        this.sendEmail(createTransactionEmail(transaction));
+        log.info("Sending transaction email to {}", transaction.getEmail());
     }
 
     private void sendEmail(@NotNull Mail mail) {
@@ -104,7 +113,7 @@ public class EmailService {
         );
         final Mail message = new Mail(
                 sendFromEmail,
-                "Verify your email address for William278.net",
+                "📩 Verify your email address - William278.net",
                 new Email(user.getEmail(), user.getName()),
                 new Content("text/html", MailTemplate.VERIFY_EMAIL.getTemplate(Map.of(
                         "%%_USERNAME_%%", user.getName(),
@@ -116,9 +125,30 @@ public class EmailService {
         return message;
     }
 
+    @NotNull
+    private Mail createTransactionEmail(@NotNull Transaction trans) {
+        final Project project = Objects.requireNonNull(trans.getProjectGrant(), "Project is null");
+        final Mail message = new Mail(
+                sendFromEmail,
+                "📦 Your %s purchase receipt - William278.net".formatted(project.getMetadata().getName()),
+                new Email(trans.getEmail()),
+                new Content("text/html", MailTemplate.PURCHASE_RECEIPT.getTemplate(Map.of(
+                        "%%_RESOURCE_NAME_%%", project.getMetadata().getName(),
+                        "%%_RESOURCE_NAME_LOWER_%%", project.getSlug(),
+                        "%%_RESOURCE_PURCHASE_PRICE_%%", "%s %s".formatted(trans.getAmount(), trans.getCurrency()),
+                        "%%_RESOURCE_MARKETPLACE_%%", trans.getMarketplace(),
+                        "%%_RESOURCE_TRANSACTION_ID_%%", trans.getTransactionReference(),
+                        "%%_RESOURCE_TRANSACTION_TIME_%%", TIME_FORMATTER.format(trans.getTimestamp())
+                )))
+        );
+        message.setReplyTo(replyToEmail);
+        return message;
+    }
+
     @AllArgsConstructor
     public enum MailTemplate {
-        VERIFY_EMAIL("verify-email.html");
+        VERIFY_EMAIL("verify-email.html"),
+        PURCHASE_RECEIPT("purchase-receipt.html");
 
         private final String file;
 
