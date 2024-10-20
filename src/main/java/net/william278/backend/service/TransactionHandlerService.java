@@ -9,7 +9,7 @@ public interface TransactionHandlerService {
     EmailService getEmailService();
 
     default void sendTransactionEmail(@NotNull Transaction transaction) {
-        if (transaction.isRefunded() || transaction.getProjectGrant() == null) {
+        if (transaction.getEmail() != null && transaction.isRefunded() || transaction.getProjectGrant() == null) {
             return;
         }
         getEmailService().sendTransactionEmail(transaction);

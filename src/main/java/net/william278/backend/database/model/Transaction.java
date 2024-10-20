@@ -32,6 +32,7 @@ public class Transaction {
 
     private Instant timestamp = Instant.now();
 
+    @Nullable
     private String email;
 
     private BigDecimal amount;

@@ -2,6 +2,7 @@ package net.william278.backend.service;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -43,8 +44,8 @@ public class StripeWebhookService implements TransactionHandlerService {
                     .ifPresent(found -> transaction.setId(found.getId()));
             transactions.save(transaction);
             sendTransactionEmail(transaction);
-        } catch (Throwable e) {
-            log.warning("Got POST on /v1/transactions/stripe with invalid body");
+        } catch (JsonProcessingException e) {
+            log.warning("Got POST on /v1/transactions/stripe with invalid body: " + e.getMessage());
         }
     }
 
