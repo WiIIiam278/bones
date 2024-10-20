@@ -66,6 +66,7 @@ public class AppConfiguration {
     private String sendEmailReplyTo;
 
     private String paypalIpnWebhookSecret;
+    private String stripePaymentWebhookSecret;
 
     private String ticketsBucketEndpoint;
     private String ticketBucketsBucket;

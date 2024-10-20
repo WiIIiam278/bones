@@ -76,9 +76,13 @@ public class DiscordOAuthConfiguration {
                             "/v1/projects/{projectName:%s}/docs".formatted(Project.PATTERN),
                             "POST", false
                     ));
-                    // Ignore PayPal IPN endpoint
+                    // Ignore transaction webhook endpoints
                     c.ignoringRequestMatchers(new AntPathRequestMatcher(
                             "/v1/transactions/paypal/{secret}",
+                            "POST", false
+                    ));
+                    c.ignoringRequestMatchers(new AntPathRequestMatcher(
+                            "/v1/transactions/stripe/{secret}",
                             "POST", false
                     ));
                     // Ignore API version publishing endpoint

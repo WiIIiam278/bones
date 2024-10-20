@@ -2,6 +2,7 @@ package net.william278.backend.service;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.Getter;
 import lombok.extern.java.Log;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.Transaction;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 
 @Log
 @Service
-public class PaypalIPNService {
+public class PaypalIPNService implements TransactionHandlerService {
 
     private static final String USER_AGENT = "William278-IPN-Responder";
     private static final String sandboxUrl = "https://ipnpb.sandbox.paypal.com/cgi-bin/webscr";
@@ -34,6 +35,8 @@ public class PaypalIPNService {
     private final OkHttpClient client;
     private final TransactionRepository transactions;
     private final ProjectRepository projects;
+
+    @Getter
     private final EmailService emailService;
 
     @Autowired
@@ -63,36 +66,24 @@ public class PaypalIPNService {
         });
     }
 
-    private void sendTransactionEmail(@NotNull Transaction transaction) {
-        if (transaction.isRefunded() || transaction.getProjectGrant() == null) {
-            return;
-        }
-        emailService.sendTransactionEmail(transaction);
-    }
-
     @NotNull
     private Transaction getTransaction(boolean isValid, Map<String, String> params) {
         final String subject = params.getOrDefault("transaction_subject", "");
         final String marketplace = subject.startsWith("Polymart") ? "Polymart.org"
                 : subject.startsWith("Purchase Resource: ") ? "SpigotMC.org" : "Unknown";
+        final BigDecimal amount = new BigDecimal(params.getOrDefault("mc_gross", "0"));
 
         final Transaction.TransactionBuilder builder = Transaction.builder()
                 .processor(Transaction.Processor.PAYPAL)
                 .transactionReference(params.getOrDefault("txn_id", "Unknown"))
                 .timestamp(Instant.now())
-                .currency(params.getOrDefault("mc_currency", "USD"))
+                .currency(params.getOrDefault("mc_currency", "USD").toLowerCase(Locale.ENGLISH))
                 .projectGrant(getProjectFromSubject(subject, marketplace).orElse(null))
                 .marketplace(marketplace)
                 .email(params.getOrDefault("payer_email", ""))
+                .amount(amount)
+                .refunded(amount.compareTo(BigDecimal.ZERO) > 0)
                 .passedValidation(isValid);
-
-        // Handle refunds
-        final BigDecimal amount = new BigDecimal(params.getOrDefault("mc_gross", "0"));
-        if (amount.compareTo(BigDecimal.ZERO) < 0) {
-            builder.refunded(true);
-        } else {
-            builder.amount(amount);
-        }
 
         return builder.build();
     }
@@ -102,8 +93,7 @@ public class PaypalIPNService {
             case "SpigotMC.org" -> projects.findById(subject.replace("Purchase Resource: ", "")
                     .split(" ")[0].toLowerCase(Locale.ENGLISH));
             case "Polymart.org" -> projects.findById(subject.split("\\|")[1].toLowerCase(Locale.ENGLISH).trim());
-            default -> projects.findById("husksync"); //todo debug
-//            default -> Optional.empty();
+            default -> Optional.empty();
         };
     }
 
