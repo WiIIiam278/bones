@@ -155,7 +155,7 @@ public class EmailService {
         @SneakyThrows
         public String getTemplate(@NotNull Map<String, String> placeholders) {
             String template = Resources.toString(
-                    Resources.getResource("emails/out/%s".formatted(file)),
+                    Resources.getResource("emails/%s".formatted(file)),
                     StandardCharsets.UTF_8
             );
             for (Map.Entry<String, String> entry : placeholders.entrySet()) {
