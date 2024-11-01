@@ -26,6 +26,7 @@ package net.william278.backend.controller.v1;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -46,6 +47,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.util.DigestUtils;
@@ -58,6 +60,7 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @RestController
@@ -372,6 +375,66 @@ public class VersionController {
 
         githubImporter.importGithub(project, request.source(), channel, request.distributionMatchersMap());
         return request;
+    }
+
+
+    @Operation(
+            summary = "Delete a version of a project."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The requested version was deleted."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "Not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "Not authorized to delete versions.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project, channel, version, and/or distribution was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @GetMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN
+                    + "}/channels/{channelName:" + Channel.PATTERN
+                    + "}/versions/{versionName:" + Version.PATTERN + "}"
+    )
+    @CrossOrigin
+    public ResponseEntity<?> deleteVersion(
+            @AuthenticationPrincipal User principal,
+
+            @Parameter(name = "project", description = "The project identifier.", example = "huskhomes")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug,
+
+            @Parameter(description = "The release channel to delete.")
+            @Pattern(regexp = Channel.PATTERN)
+            @PathVariable String channelName,
+
+            @Parameter(description = "The name of the version to delete.")
+            @Pattern(regexp = Version.PATTERN)
+            @PathVariable String versionName
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        if (!principal.isAdmin()) {
+            throw new NoPermission();
+        }
+        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
+        final Channel channel = channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
+        final Version version = versions.findByProjectAndChannelAndName(project, channel, versionName)
+                .orElseThrow(VersionNotFound::new);
+
+        versions.delete(version);
+
+        return ResponseEntity.ok().build();
     }
 
     @NotNull
