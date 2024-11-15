@@ -101,12 +101,12 @@ public class PaypalIPNService implements TransactionHandlerService {
                 .processor(Transaction.Processor.PAYPAL)
                 .transactionReference(params.getOrDefault("txn_id", "Unknown"))
                 .timestamp(Instant.now())
-                .currency(params.getOrDefault("mc_currency", "USD").toLowerCase(Locale.ENGLISH))
+                .currency(params.getOrDefault("mc_currency", "GBP").toLowerCase(Locale.ENGLISH))
                 .projectGrant(getProjectFromSubject(subject, marketplace).orElse(null))
                 .marketplace(marketplace)
                 .email(params.getOrDefault("payer_email", ""))
                 .amount(amount)
-                .refunded(amount.compareTo(BigDecimal.ZERO) > 0)
+                .refunded(amount.doubleValue() < 0.0d)
                 .passedValidation(isValid);
 
         return builder.build();

@@ -86,7 +86,7 @@ public class StripeWebhookService implements TransactionHandlerService {
             return builder.processor(Transaction.Processor.STRIPE)
                     .transactionReference(charge.id())
                     .currency(charge.currency().toUpperCase(Locale.ENGLISH))
-                    .amount(amount).refunded(amount.compareTo(BigDecimal.ZERO) > 0)
+                    .amount(amount).refunded(amount.doubleValue() < 0.0d)
                     .email(charge.getEmail(mapper))
                     .marketplace(charge.description().split("\\|")[0].trim())
                     .projectGrant(projects.findById(charge.description().split("\\|")[1]
