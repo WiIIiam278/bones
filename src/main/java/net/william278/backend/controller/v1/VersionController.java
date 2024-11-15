@@ -26,7 +26,6 @@ package net.william278.backend.controller.v1;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.headers.Header;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -60,7 +59,6 @@ import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 @RestController
@@ -400,7 +398,7 @@ public class VersionController {
             description = "The project, channel, version, and/or distribution was not found.",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
-    @GetMapping(
+    @DeleteMapping(
             value = "/v1/projects/{projectSlug:" + Project.PATTERN
                     + "}/channels/{channelName:" + Channel.PATTERN
                     + "}/versions/{versionName:" + Version.PATTERN + "}"
