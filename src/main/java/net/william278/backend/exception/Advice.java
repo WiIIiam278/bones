@@ -71,6 +71,12 @@ class Advice {
         return this.error(HttpStatus.NOT_FOUND, "Project not found.");
     }
 
+    @ExceptionHandler(PageNotFound.class)
+    @ResponseBody
+    public ResponseEntity<?> pageNotFound(final PageNotFound exception) {
+        return this.error(HttpStatus.NOT_FOUND, "Project page not found.");
+    }
+
     @ExceptionHandler(DocsPageNotFound.class)
     @ResponseBody
     public ResponseEntity<?> docsPageNotFound(final DocsPageNotFound exception) {

@@ -34,9 +34,11 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.validation.constraints.Pattern;
 import net.william278.backend.database.model.Channel;
+import net.william278.backend.database.model.Page;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.ChannelRepository;
+import net.william278.backend.database.repository.PageRepository;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.exception.*;
 import net.william278.backend.service.GitHubDataService;
@@ -58,13 +60,15 @@ public class ProjectController {
     private final ChannelRepository channels;
     private final GitHubDataService github;
     private final StatsService statsService;
+    private final PageRepository pages;
 
     @Autowired
-    public ProjectController(ProjectRepository projects, ChannelRepository channels, GitHubDataService github, StatsService statsService) {
+    public ProjectController(ProjectRepository projects, ChannelRepository channels, GitHubDataService github, StatsService statsService, PageRepository pages) {
         this.projects = projects;
         this.channels = channels;
         this.github = github;
         this.statsService = statsService;
+        this.pages = pages;
     }
 
     @Operation(
@@ -210,6 +214,127 @@ public class ProjectController {
         final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
         projects.deleteById(projectSlug);
         return project;
+    }
+
+    @Operation(
+            summary = "Get the page for a project."
+    )
+    @ApiResponse(
+            responseCode = "200"
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project was not found, or does not have a page.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @GetMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}/page",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin(value = "*", allowCredentials = "false")
+    public Page getProjectPage(
+            @Parameter(description = "The slug of the project to get the page for.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug
+    ) {
+        return pages.findByProject(projects.findById(projectSlug).map(p -> p.updateStats(statsService))
+                .orElseThrow(ProjectNotFound::new)).orElseThrow(PageNotFound::new);
+    }
+
+    @Operation(
+            summary = "Update the page for a project."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The project page was updated."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user is not an admin.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @PutMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}/page",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin(value = "*", allowCredentials = "false")
+    public Page putProjectPage(
+            @AuthenticationPrincipal User principal,
+
+            @Parameter(description = "The slug of the project to create/update the page for.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug,
+
+            @RequestBody Page page
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        if (!principal.isAdmin()) {
+            throw new NoPermission();
+        }
+
+        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
+        pages.findByProject(project).ifPresent(found -> page.setId(found.getId()));
+        page.setProject(project);
+        return pages.save(page);
+    }
+
+    @Operation(
+            summary = "Delete the page for a project."
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The project page was deleted."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user is not an admin.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project was not found or it does not have a page.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @DeleteMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}/page",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin(value = "*", allowCredentials = "false")
+    public Page deleteProjectPage(
+            @AuthenticationPrincipal User principal,
+
+            @Parameter(description = "The slug of the project to delete the page for.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        if (!principal.isAdmin()) {
+            throw new NoPermission();
+        }
+
+        final Page page = projects.findById(projectSlug).map(pages::findByProject)
+                .orElseThrow(PageNotFound::new).orElseThrow(ProjectNotFound::new);
+        pages.deleteById(page.getId());
+        return page;
     }
 
 }
