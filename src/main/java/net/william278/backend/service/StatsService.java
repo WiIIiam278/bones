@@ -24,6 +24,7 @@
 
 package net.william278.backend.service;
 
+import com.google.common.collect.Sets;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -37,33 +38,24 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
 
 @Service
 public class StatsService {
 
     private static final long CACHE_TIME = 60 * 60 * 4; // 4 hours
 
-    private final GitHubDataService github;
-    private final ModrinthDataService modrinth;
-    private final SpigotDataService spigot;
-    private final PolymartDataService polymart;
-    private final HangarDataService hangar;
-    private final LocalDataService local;
+    private final Set<StatsProvider> providers = Sets.newHashSet();
     private final Map<String, CachedStats> cache = new HashMap<>();
 
 
     @SneakyThrows
     @Autowired
     public StatsService(GitHubDataService github, ModrinthDataService modrinth, SpigotDataService spigot,
-                        PolymartDataService polymart, HangarDataService hangar, LocalDataService local) {
-        this.github = github;
-        this.modrinth = modrinth;
-        this.spigot = spigot;
-        this.polymart = polymart;
-        this.hangar = hangar;
-        this.local = local;
+                        PolymartDataService polymart, HangarDataService hangar, BStatsDataService bStats,
+                        LocalDataService local) {
+        this.providers.addAll(Set.of(github, modrinth, spigot, polymart, hangar, bStats, local));
     }
 
     // Combine the stats from all services
@@ -88,7 +80,7 @@ public class StatsService {
     // Get the stats from all services
     @NotNull
     private Project.Stats getStatsNow(@NotNull Project project) {
-        return Stream.of(github, modrinth, spigot, polymart, hangar, local)
+        return providers.stream()
                 .map((service) -> service.getStats(project))
                 .filter(Optional::isPresent).map(Optional::get)
                 .reduce(Project.Stats::combine)

@@ -437,6 +437,18 @@ public class Project implements Comparable<Project> {
         )
         public long interactions;
 
+        @Schema(
+                name = "onlinePlayers",
+                description = "The number of users currently using this project"
+        )
+        public long onlinePlayers;
+
+        @Schema(
+                name = "onlineServers",
+                description = "The number of servers currently running this project"
+        )
+        public long onlineServers;
+
         @NotNull
         public Stats combine(@NotNull Stats other) {
             return new Stats(
@@ -444,7 +456,9 @@ public class Project implements Comparable<Project> {
                     (this.averageRating * this.numberOfRatings + other.averageRating * other.numberOfRatings)
                     / Math.max(this.numberOfRatings + other.numberOfRatings, 1),
                     this.numberOfRatings + other.numberOfRatings,
-                    this.interactions + other.interactions
+                    this.interactions + other.interactions,
+                    this.onlinePlayers + other.onlinePlayers,
+                    this.onlineServers + other.onlineServers
             );
         }
 
