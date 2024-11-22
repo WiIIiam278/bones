@@ -100,8 +100,8 @@ public class Project implements Comparable<Project> {
             name = "metadata",
             description = "JSON metadata for the project."
     )
-    @JsonSerialize
     @SneakyThrows
+    @JsonSerialize
     @NotNull
     public Metadata getMetadata() {
         return new ObjectMapper().readValue(metadata, Metadata.class);

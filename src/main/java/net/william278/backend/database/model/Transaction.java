@@ -54,6 +54,7 @@ public class Transaction {
 
     private Processor processor;
 
+    @Builder.Default
     private Instant timestamp = Instant.now();
 
     @Nullable

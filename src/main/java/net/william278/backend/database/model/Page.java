@@ -7,6 +7,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
 import org.apache.commons.compress.utils.Lists;
+import org.hibernate.validator.constraints.Length;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,30 +62,29 @@ public class Page {
         this.contents = new ObjectMapper().writeValueAsString(contents);
     }
 
-
-    @AllArgsConstructor
+    @Getter
+    @Setter
     @NoArgsConstructor
-    public static class Contents {
-
-        private List<Section> sections = Lists.newArrayList();
-
-        protected void sort() {
-            Collections.sort(sections);
-            sections.forEach(Section::sort);
-        }
-
-    }
-
     @AllArgsConstructor
-    @NoArgsConstructor
-    public static class Section implements Comparable<Section> {
+    public static abstract class SectionContainer {
 
-        private int order;
-        private String type;
-        private @Nullable String title;
-        private @Nullable String body;
-        private @Nullable Map<String, String> properties;
-        private @Nullable List<Section> sections;
+        @Schema(
+                name = "sections",
+                description = "Ordered sections this page contains",
+                example = """
+                        [
+                          {
+                            "order": 1,
+                            "type": "hero",
+                            "properties": {
+                              "color1": "#12345",
+                              "color2": "#42312"
+                            }
+                          }
+                        ]"""
+        )
+        @Length(min = 1, max = 255)
+        private @Nullable List<Section> sections = Lists.newArrayList();
 
         protected void sort() {
             if (sections == null) {
@@ -93,6 +93,62 @@ public class Page {
             Collections.sort(sections);
             sections.forEach(Section::sort);
         }
+
+    }
+
+    @Getter
+    @Setter
+    @Builder
+    public static class Contents extends SectionContainer {
+
+    }
+
+    @Getter
+    @Setter
+    @AllArgsConstructor
+    @NoArgsConstructor
+    @Builder
+    public static class Section extends SectionContainer implements Comparable<Section> {
+
+        @Schema(
+                name = "order",
+                description = "Weighted order of this section in the page",
+                example = "1"
+        )
+        private int order;
+
+        @Schema(
+                name = "type",
+                description = "Type of this page",
+                example = "hero"
+        )
+        private String type;
+
+        @Schema(
+                name = "title",
+                description = "Section title, as applicable",
+                example = "HuskHomes"
+        )
+        private @Nullable String title;
+
+        @Schema(
+                name = "body",
+                description = "Section body, as applicable",
+                example = "A cross-server homes plugin"
+        )
+        private @Nullable String body;
+
+        @Schema(
+                name = "properties",
+                description = "Section properties, as applicable",
+                example = """
+                        {
+                          "property1": "foo",
+                          "property2": "bar"
+                        }
+                        """
+        )
+        private @Nullable Map<String, String> properties;
 
         @Override
         public int compareTo(@NotNull Page.Section o) {
