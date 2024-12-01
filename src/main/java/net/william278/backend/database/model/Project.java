@@ -121,8 +121,8 @@ public class Project implements Comparable<Project> {
     )
     @JsonSerialize
     @Unmodifiable
-    @SuppressWarnings("unused")
     @Transactional
+    @SuppressWarnings("unused")
     public Set<String> getReleaseChannels() {
         return releaseChannels.stream().map(Channel::getName).collect(Collectors.toSet());
     }
