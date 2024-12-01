@@ -29,7 +29,9 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface PostRepository extends JpaRepository<Post, Integer> {
@@ -44,6 +46,13 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
     Page<Post> findAllByOrderByTimestampDesc(@NotNull Pageable pageable);
 
     @NotNull
+    Page<Post> findAllByCategoryOrderByTimestampDesc(@NotNull Pageable pageable, @NotNull String category);
+
+    @NotNull
     Page<Post> findAllByTitleContentContainingIgnoreCaseOrderByTimestampDesc(@NotNull String title, Pageable pageable);
+
+    @Query("SELECT DISTINCT p.category FROM Post p ORDER BY p.category DESC")
+    @NotNull
+    List<String> getAllCategories();
 
 }
