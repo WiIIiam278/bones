@@ -35,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.time.Instant;
+import java.util.Locale;
 
 @Schema(
         name = "Post",
@@ -50,6 +51,8 @@ import java.time.Instant;
 public class Post {
 
     public static final String PATTERN = "[a-z0-9.-]+";
+    public static final String NEWS_CATEGORY = "news";
+    public static final String VERSION_UPDATES_CATEGORY = "changelogs";
 
     @Id
     @JsonIgnore
@@ -89,7 +92,7 @@ public class Post {
             description = "Category string of this post."
     )
     @Builder.Default
-    public String category = "news";
+    public String category = NEWS_CATEGORY;
 
     @JsonIgnore
     @ManyToOne
@@ -141,7 +144,10 @@ public class Post {
     @JsonSerialize
     @NotNull
     private String title() {
-        return isVersionUpdate() ? associatedVersionUpdate.getName() : (titleContent != null ? titleContent : "");
+        return isVersionUpdate() ? "%s v%s".formatted(
+                associatedVersionUpdate.getProject().getMetadata().getName(),
+                associatedVersionUpdate.getName())
+                : (titleContent != null ? titleContent : "");
     }
 
     private void setTitle(@NotNull String title) {
@@ -169,6 +175,15 @@ public class Post {
 
     private void setBody(@NotNull String body) {
         this.bodyContent = body;
+    }
+
+    @NotNull
+    public static Post fromVersion(@NotNull Version version) {
+        return Post.builder()
+                .associatedVersionUpdate(version)
+                .category(VERSION_UPDATES_CATEGORY)
+                .slug("%s-%s".formatted(version.getProject().getSlug(), version.getName()).toLowerCase(Locale.ENGLISH))
+                .build();
     }
 
 }

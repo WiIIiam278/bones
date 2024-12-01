@@ -75,10 +75,11 @@ public class VersionController {
     private final GitHubImportService githubImporter;
     private final DistributionRepository distributions;
     private final DownloadRepository downloads;
+    private final PostRepository posts;
 
     @Autowired
     public VersionController(AppConfiguration config, ProjectRepository projects, ChannelRepository channels,
-                             VersionRepository versions, GitHubImportService gitHubImportService, DistributionRepository distributions, DownloadRepository downloads) {
+                             VersionRepository versions, GitHubImportService gitHubImportService, DistributionRepository distributions, DownloadRepository downloads, PostRepository posts) {
         this.config = config;
         this.projects = projects;
         this.channels = channels;
@@ -86,6 +87,7 @@ public class VersionController {
         this.githubImporter = gitHubImportService;
         this.distributions = distributions;
         this.downloads = downloads;
+        this.posts = posts;
     }
 
     @Operation(
@@ -489,7 +491,12 @@ public class VersionController {
             throw new UploadFailed();
         }
 
-        return versions.save(version);
+        // Save the version, auto-create a post
+        final Version created = versions.save(version);
+        if (created.getChannel().isCreatePosts()) {
+            posts.save(Post.fromVersion(created));
+        }
+        return created;
     }
 
     @Schema(description = "Request to import versions from GitHub.")

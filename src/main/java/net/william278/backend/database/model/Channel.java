@@ -63,9 +63,17 @@ public class Channel {
     @Builder.Default
     private boolean emailNotifications = false;
 
+    @Schema(
+            name = "createPosts",
+            example = "true",
+            description = "Whether posts should be created when a version is published to this channel"
+    )
+    private boolean createPosts = false;
+
     public Channel(@NotNull String name) {
         this.name = name;
         this.emailNotifications = false;
+        this.createPosts = false;
     }
 
 }
