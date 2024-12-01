@@ -67,17 +67,10 @@ public class PostController {
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     public Page<Post> findPaginated(
-            @AuthenticationPrincipal User principal,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "10") int size,
             @RequestParam(value = "categoryFilter", required = false) String categoryFilter
     ) {
-        if (principal == null) {
-            throw new NotAuthenticated();
-        }
-        if (!principal.isAdmin()) {
-            throw new NoPermission();
-        }
         if (categoryFilter != null) {
             return posts.findAllByCategoryOrderByTimestampDesc(PageRequest.of(page, size), categoryFilter);
         }

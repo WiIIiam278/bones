@@ -24,12 +24,12 @@
 
 package net.william278.backend.database.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Pattern;
 import lombok.*;
-import net.minidev.json.annotate.JsonIgnore;
 import org.hibernate.validator.constraints.Length;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -69,15 +69,33 @@ public class Post {
     @Column(unique = true)
     private String slug;
 
-    @Schema(
-            name = "author",
-            description = "The author of this post, if there is one",
-            requiredMode = Schema.RequiredMode.NOT_REQUIRED
-    )
+    @JsonIgnore
     @ManyToOne(fetch = FetchType.EAGER)
     @Nullable
     @Builder.Default
     private User author = null;
+
+    @Schema(
+            name = "authorName",
+            description = "The author of this post, if there is one",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
+    @JsonSerialize
+    @Nullable
+    private String getAuthorName() {
+        return author != null ? author.getName() : null;
+    }
+
+    @Schema(
+            name = "authorAvatar",
+            description = "Avatar of the author of the post",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
+    @JsonSerialize
+    @Nullable
+    private String getAuthorAvatar() {
+        return author != null ? author.getAvatar().toString() : null;
+    }
 
     @Schema(
             name = "timestamp",
@@ -94,8 +112,17 @@ public class Post {
     @Builder.Default
     public String category = NEWS_CATEGORY;
 
+    @Schema(
+            name = "imageUrl",
+            description = "A URL for the main post image.",
+            requiredMode = Schema.RequiredMode.NOT_REQUIRED
+    )
+    @Nullable
+    @Builder.Default
+    public String imageUrl = null;
+
     @JsonIgnore
-    @ManyToOne
+    @ManyToOne(cascade = CascadeType.ALL)
     @Nullable
     @Builder.Default
     private Version associatedVersionUpdate = null;
@@ -105,7 +132,6 @@ public class Post {
             description = "Whether this post is a version release post.",
             requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
-    @SneakyThrows
     @JsonSerialize
     @NotNull
     private Boolean isVersionUpdate() {
