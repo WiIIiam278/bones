@@ -170,7 +170,7 @@ public class Post {
     @JsonSerialize
     @NotNull
     private String title() {
-        return isVersionUpdate() ? "%s v%s".formatted(
+        return isVersionUpdate() ? "%s v%s Released".formatted(
                 associatedVersionUpdate.getProject().getMetadata().getName(),
                 associatedVersionUpdate.getName())
                 : (titleContent != null ? titleContent : "");
