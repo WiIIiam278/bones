@@ -87,7 +87,7 @@ public class UserController {
     )
     @ApiResponse(
             responseCode = "403",
-            description = "The user is not an admin.",
+            description = "The user is not a staff member.",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @CrossOrigin
@@ -100,7 +100,7 @@ public class UserController {
         if (principal == null) {
             throw new NotAuthenticated();
         }
-        if (!principal.isAdmin()) {
+        if (!principal.isStaff()) {
             throw new NoPermission();
         }
         if (nameSearch != null && !nameSearch.isBlank()) {
@@ -124,7 +124,7 @@ public class UserController {
     )
     @ApiResponse(
             responseCode = "403",
-            description = "The user is not an admin.",
+            description = "The user is not a staff member.",
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @ApiResponse(
@@ -146,7 +146,7 @@ public class UserController {
         if (principal == null) {
             throw new NotAuthenticated();
         }
-        if (!principal.isAdmin()) {
+        if (!principal.isStaff()) {
             throw new NoPermission();
         }
         return users.findById(userId).orElseThrow(UserNotFound::new);
