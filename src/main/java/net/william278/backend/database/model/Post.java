@@ -138,7 +138,7 @@ public class Post {
         return associatedVersionUpdate != null;
     }
 
-    private void setIsVersionUpdate(boolean isVersionUpdate) {
+    public void setIsVersionUpdate(boolean isVersionUpdate) {
         this.associatedVersionUpdate = isVersionUpdate ? this.associatedVersionUpdate : null;
     }
 
@@ -150,7 +150,7 @@ public class Post {
     @SneakyThrows
     @JsonSerialize
     @Nullable
-    private String getAssociatedProject() {
+    public String getAssociatedProject() {
         return associatedVersionUpdate == null ? null : associatedVersionUpdate.getProject().getSlug();
     }
 
@@ -169,14 +169,14 @@ public class Post {
     @SneakyThrows
     @JsonSerialize
     @NotNull
-    private String title() {
+    public String title() {
         return isVersionUpdate() ? "%s v%s Released".formatted(
                 associatedVersionUpdate.getProject().getMetadata().getName(),
                 associatedVersionUpdate.getName())
                 : (titleContent != null ? titleContent : "");
     }
 
-    private void setTitle(@NotNull String title) {
+    public void setTitle(@NotNull String title) {
         this.titleContent = title;
     }
 
@@ -195,11 +195,11 @@ public class Post {
     @SneakyThrows
     @JsonSerialize
     @NotNull
-    private String body() {
+    public String body() {
         return isVersionUpdate() ? associatedVersionUpdate.getChangelog() : (bodyContent != null ? bodyContent : "");
     }
 
-    private void setBody(@NotNull String body) {
+    public void setBody(@NotNull String body) {
         this.bodyContent = body;
     }
 

@@ -44,6 +44,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @RestController
@@ -196,7 +197,10 @@ public class PostController {
         final Optional<Post> existingPost = posts.findBySlug(postSlug);
         existingPost.ifPresentOrElse(
                 (found) -> post.setId(found.getId()),
-                () -> post.setAuthor(principal)
+                () -> {
+                    post.setAuthor(principal);
+                    post.setTimestamp(Instant.now());
+                }
         );
         posts.save(post);
 
