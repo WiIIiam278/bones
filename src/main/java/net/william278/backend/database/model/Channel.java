@@ -30,7 +30,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import lombok.*;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 @Schema(
         name = "Channel",
@@ -44,13 +43,14 @@ import org.jetbrains.annotations.Nullable;
 @NoArgsConstructor
 public class Channel {
 
+    public static final String DEFAULT_RELEASES_CHANNEL = "release";
     public static final String PATTERN = "[a-z0-9._-]+";
 
     @Id
     @Schema(
             name = "name",
             pattern = PATTERN,
-            example = "release",
+            example = DEFAULT_RELEASES_CHANNEL,
             description = "The lowercase channel name."
     )
     private String name;
@@ -68,12 +68,13 @@ public class Channel {
             example = "true",
             description = "Whether posts should be created when a version is published to this channel"
     )
+    @Builder.Default
     private boolean createPosts = false;
 
     public Channel(@NotNull String name) {
         this.name = name;
-        this.emailNotifications = false;
-        this.createPosts = false;
+        this.emailNotifications = name.equals(DEFAULT_RELEASES_CHANNEL);
+        this.createPosts = name.equals(DEFAULT_RELEASES_CHANNEL);
     }
 
 }

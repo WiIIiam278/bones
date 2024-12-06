@@ -25,6 +25,7 @@
 package net.william278.backend.database.repository;
 
 import net.william278.backend.database.model.Post;
+import net.william278.backend.database.model.Project;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +48,9 @@ public interface PostRepository extends JpaRepository<Post, Integer> {
 
     @NotNull
     Page<Post> findAllByCategoryOrderByTimestampDesc(@NotNull Pageable pageable, @NotNull String category);
+
+    @NotNull
+    Page<Post> findAllByAssociatedProjectOrderByTimestampDesc(@NotNull Pageable pageable, @NotNull Project project);
 
     @NotNull
     Page<Post> findAllByTitleContentContainingIgnoreCaseOrderByTimestampDesc(@NotNull String title, Pageable pageable);

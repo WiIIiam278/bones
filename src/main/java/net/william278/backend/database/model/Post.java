@@ -53,6 +53,7 @@ public class Post {
     public static final String PATTERN = "[a-z0-9.-]+";
     public static final String NEWS_CATEGORY = "news";
     public static final String VERSION_UPDATES_CATEGORY = "changelogs";
+    public static final String PROMOTIONS_CATEGORY = "promotions";
 
     @Id
     @JsonIgnore
@@ -147,12 +148,10 @@ public class Post {
             description = "The project associated with this post.",
             requiredMode = Schema.RequiredMode.NOT_REQUIRED
     )
-    @SneakyThrows
-    @JsonSerialize
+    @ManyToOne(cascade = CascadeType.ALL)
     @Nullable
-    public String getAssociatedProject() {
-        return associatedVersionUpdate == null ? null : associatedVersionUpdate.getProject().getSlug();
-    }
+    @Builder.Default
+    private Project associatedProject = null;
 
     @JsonIgnore
     @Nullable
@@ -171,7 +170,7 @@ public class Post {
     @NotNull
     public String title() {
         return isVersionUpdate() ? "%s v%s Released".formatted(
-                associatedVersionUpdate.getProject().getMetadata().getName(),
+                associatedProject.getMetadata().getName(),
                 associatedVersionUpdate.getName())
                 : (titleContent != null ? titleContent : "");
     }
@@ -207,6 +206,7 @@ public class Post {
     public static Post fromVersion(@NotNull Version version) {
         return Post.builder()
                 .associatedVersionUpdate(version)
+                .associatedProject(version.getProject())
                 .category(VERSION_UPDATES_CATEGORY)
                 .slug("%s-%s".formatted(version.getProject().getSlug(), version.getName()).toLowerCase(Locale.ENGLISH))
                 .build();

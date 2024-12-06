@@ -32,9 +32,12 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
+import jakarta.validation.constraints.Pattern;
 import net.william278.backend.database.model.Post;
+import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.PostRepository;
+import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.exception.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -53,10 +56,12 @@ import java.util.Optional;
 public class PostController {
 
     private final PostRepository posts;
+    private final ProjectRepository projects;
 
     @Autowired
-    public PostController(PostRepository posts) {
+    public PostController(PostRepository posts, ProjectRepository projects) {
         this.posts = posts;
+        this.projects = projects;
     }
 
     @Operation(
@@ -79,6 +84,26 @@ public class PostController {
     }
 
     @Operation(
+            summary = "Get a paginated list of all posts related to a specified project.",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @GetMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN + "}/posts",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public Page<Post> findProjectPaginated(
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", defaultValue = "10") int size,
+
+            @Parameter(description = "The slug of the project to get posts for.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug
+    ) {
+        return posts.findAllByAssociatedProjectOrderByTimestampDesc(PageRequest.of(page, size),
+                projects.findById(projectSlug).orElseThrow(ProjectNotFound::new));
+    }
+
+    @Operation(
             summary = "Get a specific post by its slug."
     )
     @ApiResponse(
@@ -91,11 +116,12 @@ public class PostController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @GetMapping(
-            value = "/v1/posts/{postSlug}",
+            value = "/v1/posts/{postSlug:" + Post.PATTERN + "}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     public Post getPost(
             @Parameter(description = "The slug of the post to get.")
+            @Pattern(regexp = Post.PATTERN)
             @PathVariable String postSlug
     ) {
         return posts.findBySlug(postSlug).orElseThrow(PostNotFound::new);
@@ -125,13 +151,14 @@ public class PostController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @DeleteMapping(
-            value = "/v1/posts/{postSlug}",
+            value = "/v1/posts/{postSlug:" + Post.PATTERN + "}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     public Post deletePost(
             @AuthenticationPrincipal User principal,
 
             @Parameter(description = "The slug of the post to delete.")
+            @Pattern(regexp = Post.PATTERN)
             @PathVariable String postSlug
     ) {
         if (principal == null) {
@@ -174,7 +201,7 @@ public class PostController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @PutMapping(
-            value = "/v1/posts/{postSlug}",
+            value = "/v1/posts/{postSlug:" + Post.PATTERN + "}",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @CrossOrigin
@@ -182,6 +209,7 @@ public class PostController {
             @AuthenticationPrincipal User principal,
 
             @Parameter(description = "The slug of the post to create or update.")
+            @Pattern(regexp = Post.PATTERN)
             @PathVariable String postSlug,
 
             @RequestBody Post post
