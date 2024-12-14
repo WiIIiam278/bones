@@ -50,6 +50,7 @@ import java.util.Locale;
 @AllArgsConstructor
 public class Post {
 
+    public static final String RELEASED_POST_SUFFIX = "Released";
     public static final String PATTERN = "[a-z0-9.-]+";
     public static final String NEWS_CATEGORY = "news";
     public static final String VERSION_UPDATES_CATEGORY = "changelogs";
@@ -169,9 +170,10 @@ public class Post {
     @JsonSerialize
     @NotNull
     public String title() {
-        return isVersionUpdate() ? "%s v%s Released".formatted(
+        return isVersionUpdate() ? "%s v%s %s".formatted(
                 associatedProject.getMetadata().getName(),
-                associatedVersionUpdate.getName())
+                associatedVersionUpdate.getName(),
+                RELEASED_POST_SUFFIX)
                 : (titleContent != null ? titleContent : "");
     }
 
@@ -208,7 +210,9 @@ public class Post {
                 .associatedVersionUpdate(version)
                 .associatedProject(version.getProject())
                 .category(VERSION_UPDATES_CATEGORY)
-                .slug("%s-%s".formatted(version.getProject().getSlug(), version.getName()).toLowerCase(Locale.ENGLISH))
+                .slug("%s-%s-%s"
+                        .formatted(version.getProject().getSlug(), version.getName(), RELEASED_POST_SUFFIX)
+                        .toLowerCase(Locale.ENGLISH))
                 .build();
     }
 
