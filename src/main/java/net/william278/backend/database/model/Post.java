@@ -55,6 +55,7 @@ public class Post {
     public static final String NEWS_CATEGORY = "news";
     public static final String VERSION_UPDATES_CATEGORY = "changelogs";
     public static final String PROMOTIONS_CATEGORY = "promotions";
+    public static final String BLOG_CATEGORY = "news";
 
     @Id
     @JsonIgnore
