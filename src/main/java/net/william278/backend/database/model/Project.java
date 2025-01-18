@@ -248,6 +248,14 @@ public class Project implements Comparable<Project> {
         private Set<String> maintainers = new HashSet<>(Set.of("William278"));
 
         @Schema(
+                name = "compatibleSoftware",
+                description = "A list of software platforms compatible with the project.",
+                example = "[\"paper\", \"fabric\"]"
+        )
+        @Builder.Default
+        private List<String> compatibleSoftware = new ArrayList<>();
+
+        @Schema(
                 name = "suggestedRetailPrice",
                 description = "The suggested retail price of the project.",
                 requiredMode = Schema.RequiredMode.NOT_REQUIRED
