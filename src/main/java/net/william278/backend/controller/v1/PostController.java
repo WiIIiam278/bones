@@ -223,13 +223,9 @@ public class PostController {
 
         // If the post exists, update it, otherwise make it & set author
         final Optional<Post> existingPost = posts.findBySlug(postSlug);
-        existingPost.ifPresentOrElse(
-                (found) -> post.setId(found.getId()),
-                () -> {
-                    post.setAuthor(principal);
-                    post.setTimestamp(Instant.now());
-                }
-        );
+        existingPost.ifPresent((found) -> post.setId(found.getId()));
+        post.setAuthor(principal);
+        post.setTimestamp(Instant.now());
         posts.save(post);
 
         return ResponseEntity.status(existingPost.isEmpty() ? 201 : 200).body(post);
