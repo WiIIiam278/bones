@@ -37,7 +37,7 @@ dependencies {
     implementation 'org.springframework.session:spring-session-core'
     implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.6.0'
     implementation 'me.paulschwarz:spring-dotenv:4.0.0'
-    implementation 'com.mysql:mysql-connector-j'
+    implementation 'org.mariadb.jdbc:mariadb-java-client'
     implementation 'am.ik.webhook:webhook-verifier:0.1.2'
 
     // Statistics clients
