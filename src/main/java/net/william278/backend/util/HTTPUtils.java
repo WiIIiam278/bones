@@ -52,8 +52,8 @@ public class HTTPUtils {
                 .sMaxAge(sMaxAge);
     }
 
-    public static ContentDisposition attachmentDisposition(final Path filename) {
-        return ContentDisposition.attachment().filename(filename.getFileName().toString(), StandardCharsets.UTF_8).build();
+    public static ContentDisposition attachmentDisposition(String filename) {
+        return ContentDisposition.attachment().filename(filename, StandardCharsets.UTF_8).build();
     }
 
     @SneakyThrows

@@ -53,7 +53,6 @@ public class AppConfiguration {
     private String apiVersion;
     private String apiSecret;
 
-    private @NotNull Path storagePath;
     private @NotNull Path docsPath;
 
     private String modrinthApiToken;

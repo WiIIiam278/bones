@@ -31,11 +31,13 @@ import lombok.extern.slf4j.Slf4j;
 import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.Asset;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.InvalidKeyException;
 import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
@@ -87,7 +89,8 @@ public class S3Service {
 
     public void uploadAsset(@NotNull MultipartFile file, @NotNull Asset asset) {
         try {
-            client.uploadObject(UploadObjectArgs.builder()
+            client.putObject(PutObjectArgs.builder()
+                    .stream(file.getInputStream(), file.getSize(), -1)
                     .bucket(config.getS3AssetsBucket())
                     .object(asset.getName())
                     .contentType(file.getContentType())
@@ -112,9 +115,39 @@ public class S3Service {
         }
     }
 
+    public void uploadVersion(@NotNull InputStream versionStream, long size,
+                              @NotNull String contentType, @NotNull String objectName) {
+        try {
+            client.putObject(PutObjectArgs.builder()
+                    .stream(versionStream, size, -1)
+                    .bucket(config.getS3DownloadsBucket())
+                    .object(objectName)
+                    .contentType(contentType)
+                    .build());
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
+                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
+                 ServerException e) {
+            log.warn("Failed to upload version '{}'", objectName, e);
+        }
+    }
+
+    @Nullable
+    public InputStream downloadVersion(@NotNull String objectName) {
+        try {
+            return client.getObject(GetObjectArgs.builder()
+                    .bucket(config.getS3DownloadsBucket())
+                    .object(objectName)
+                    .build());
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
+                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
+                 ServerException e) {
+            log.warn("Failed to download version '{}'", objectName, e);
+        }
+        return null;
+    }
+
     @NotNull
     private static String getTicketObjectName(long ticketNumber) {
         return String.format("ticket-%04d".formatted(ticketNumber));
     }
-
 }

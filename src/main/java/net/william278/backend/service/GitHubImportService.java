@@ -64,6 +64,7 @@ public class GitHubImportService {
     private final ChannelRepository channels;
     private final DownloadRepository downloads;
     private final ProjectRepository projects;
+    private final S3Service s3;
 
     public void importGithub(@NotNull Project project, @NotNull VersionSource source, @NotNull Channel channel,
                              @NotNull Map<String, Distribution> distributionMatchers) throws IllegalArgumentException {
@@ -152,19 +153,19 @@ public class GitHubImportService {
                         distro.get().setProject(project);
                         return distributions.save(distro.get());
                     });
-            final Path path = getUploadPathFor(project, channel, distribution, versionName, asset.getName());
+            final String objectName = getUploadObjectName(project, channel, distribution, versionName, asset.getName());
 
             // Copy the input stream to the file path
-            log.info("Downloading asset {} from GitHub to {} ({}kb)", asset.getName(), path, asset.getSize() / 1024);
-            FileUtils.copyToFile(inputStream, path.toFile());
-            log.info("Downloaded asset {}!", asset.getName());
+            log.info("Downloading asset {} from GitHub and uploading to S3 as {} ({}kb)", asset.getName(), objectName, asset.getSize() / 1024);
+            s3.uploadVersion(inputStream, asset.getSize(), asset.getContentType(), objectName);
+            log.info("Successfully re-uploaded asset {}!", asset.getName());
 
             // Return the download object
             final Download download = Download.builder()
                     .name(asset.getName())
                     .distribution(distribution)
                     .fileSize(asset.getSize())
-                    .md5(DigestUtils.md5DigestAsHex(FileUtils.readFileToByteArray(path.toFile())))
+                    .md5(DigestUtils.md5DigestAsHex(inputStream))
                     .build();
             return Optional.of(downloads.save(download));
         } catch (Throwable e) {
@@ -174,15 +175,10 @@ public class GitHubImportService {
     }
 
     @NotNull
-    private Path getUploadPathFor(@NotNull Project project, @NotNull Channel channel,
-                                  @NotNull Distribution distribution, @NotNull String versionName,
-                                  @NotNull String fileName) {
-        return config.getStoragePath()
-                .resolve(project.getSlug())
-                .resolve(channel.getName())
-                .resolve(versionName)
-                .resolve(distribution.getName())
-                .resolve(fileName);
+    private String getUploadObjectName(@NotNull Project project, @NotNull Channel channel,
+                                     @NotNull Distribution distribution, @NotNull String versionName,
+                                     @NotNull String fileName) {
+        return String.join("/", project.getSlug(), channel.getName(), versionName, distribution.getName(), fileName);
     }
 
     @Getter

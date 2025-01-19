@@ -39,7 +39,7 @@ import net.william278.backend.database.model.*;
 import net.william278.backend.database.repository.*;
 import net.william278.backend.exception.*;
 import net.william278.backend.service.GitHubImportService;
-import org.apache.commons.io.FileUtils;
+import net.william278.backend.service.S3Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +54,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.InputStream;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.time.Instant;
 import java.util.List;
@@ -67,6 +66,7 @@ import java.util.stream.Collectors;
 public class VersionController {
 
     private static final Logger log = LoggerFactory.getLogger(VersionController.class);
+    private static final String DEFAULT_CONTENT_TYPE = "application/java-archive";
 
     private final AppConfiguration config;
     private final ProjectRepository projects;
@@ -76,10 +76,13 @@ public class VersionController {
     private final DistributionRepository distributions;
     private final DownloadRepository downloads;
     private final PostRepository posts;
+    private final S3Service s3;
 
     @Autowired
     public VersionController(AppConfiguration config, ProjectRepository projects, ChannelRepository channels,
-                             VersionRepository versions, GitHubImportService gitHubImportService, DistributionRepository distributions, DownloadRepository downloads, PostRepository posts) {
+                             VersionRepository versions, GitHubImportService gitHubImportService,
+                             DistributionRepository distributions, DownloadRepository downloads, PostRepository posts,
+                             S3Service s3) {
         this.config = config;
         this.projects = projects;
         this.channels = channels;
@@ -88,6 +91,7 @@ public class VersionController {
         this.distributions = distributions;
         this.downloads = downloads;
         this.posts = posts;
+        this.s3 = s3;
     }
 
     @Operation(
@@ -468,7 +472,7 @@ public class VersionController {
             for (int i = 0; i < files.length; i++) {
                 final MultipartFile file = files[i];
                 final Download download = version.getDownloads().get(i);
-                final Path dest = version.getDownloadPathFor(download.getDistribution(), config);
+                final String objectName = version.getDownloadObjectName(download.getDistribution(), download);
 
                 // Check size
                 long size = file.getSize();
@@ -479,10 +483,12 @@ public class VersionController {
 
                 // Move file
                 try (InputStream copy = file.getInputStream()) {
-                    FileUtils.copyInputStreamToFile(copy, dest.toFile());
+                    s3.uploadVersion(copy, size,
+                            file.getContentType() == null ? DEFAULT_CONTENT_TYPE : file.getContentType(),
+                            objectName);
                 }
                 try (InputStream copy = file.getInputStream()) {
-                    download.setMd5(DigestUtils.md5Digest(copy));
+                    download.setMd5(DigestUtils.md5DigestAsHex(copy));
                 }
                 downloads.save(download);
             }

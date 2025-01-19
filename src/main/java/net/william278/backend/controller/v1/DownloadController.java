@@ -34,26 +34,26 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.*;
 import net.william278.backend.database.repository.ChannelRepository;
 import net.william278.backend.database.repository.DistributionRepository;
 import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.database.repository.VersionRepository;
 import net.william278.backend.exception.*;
+import net.william278.backend.service.S3Service;
 import net.william278.backend.util.HTTPUtils;
 import net.william278.backend.util.MediaTypeUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
+import java.time.Instant;
+import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
 
 @Slf4j
@@ -63,20 +63,20 @@ import java.util.concurrent.CompletableFuture;
 public class DownloadController {
 
     private static final CacheControl CACHE = CacheControl.empty().cachePublic().sMaxAge(Duration.ofDays(7));
-    private final AppConfiguration configuration;
     private final ProjectRepository projects;
     private final VersionRepository versions;
     private final ChannelRepository channels;
     private final DistributionRepository distributions;
+    private final S3Service s3;
 
     @Autowired
-    public DownloadController(AppConfiguration configuration, ProjectRepository projects, VersionRepository versions,
-                              ChannelRepository channels, DistributionRepository distributions) {
-        this.configuration = configuration;
+    public DownloadController(ProjectRepository projects, VersionRepository versions,
+                              ChannelRepository channels, DistributionRepository distributions, S3Service s3) {
         this.projects = projects;
         this.versions = versions;
         this.channels = channels;
         this.distributions = distributions;
+        this.s3 = s3;
     }
 
     @Operation(
@@ -146,11 +146,11 @@ public class DownloadController {
         final Channel channel = channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
         final Version version = versions.findByProjectAndChannelAndName(project, channel, versionName)
                 .orElseThrow(VersionNotFound::new);
-        final Distribution distribution = distributions.findDistributionByNameAndProjectOrderBySortingWeightDesc(distributionName, project)
+        final Distribution dist = distributions.findDistributionByNameAndProjectOrderBySortingWeightDesc(distributionName, project)
                 .orElseThrow(DistributionNotFound::new);
 
         // Check the version has this distribution
-        if (!version.hasDistribution(distribution)) {
+        if (!version.hasDistribution(dist)) {
             throw new DistributionNotFound();
         }
 
@@ -168,7 +168,11 @@ public class DownloadController {
         CompletableFuture.runAsync(() -> incrementVersionDownloads(version));
 
         try {
-            return new DownloadArchive(version.getDownloadPathFor(distribution, this.configuration), CACHE);
+            final Download download = version.getDownloadFor(dist);
+            return new DownloadArchive(
+                    s3, version.getDownloadObjectName(dist, download),
+                    version.getTimestamp(), download, CACHE
+            );
         } catch (Throwable e) {
             log.warn("Failed to serve download version archive", e);
             throw new DownloadFailed();
@@ -180,19 +184,28 @@ public class DownloadController {
         versions.save(version);
     }
 
-    private static class DownloadArchive extends ResponseEntity<FileSystemResource> {
+    private static class DownloadArchive extends ResponseEntity<InputStreamResource> {
 
-        private DownloadArchive(final Path path, final CacheControl cache) throws IOException {
-            super(new FileSystemResource(path), headersFor(path, cache), HttpStatus.OK);
+        private DownloadArchive(@NotNull S3Service service, @NotNull String objectName, @NotNull Instant timestamp,
+                                @NotNull Download download, @NotNull CacheControl cache) {
+            super(
+                    new InputStreamResource(
+                            () -> Objects.requireNonNull(service.downloadVersion(objectName)),
+                            "Couldn't stream version archive file '%s' from S3".formatted(objectName)
+                    ),
+                    headersFor(download, timestamp, cache), HttpStatus.OK
+            );
         }
 
         @NotNull
-        private static HttpHeaders headersFor(final Path path, final CacheControl cache) throws IOException {
+        @SneakyThrows
+        private static HttpHeaders headersFor(@NotNull Download download, @NotNull Instant timestamp,
+                                              @NotNull CacheControl cache) {
             final HttpHeaders headers = new HttpHeaders();
             headers.setCacheControl(cache);
-            headers.setContentDisposition(HTTPUtils.attachmentDisposition(path));
-            headers.setContentType(MediaTypeUtils.fromFileName(path.getFileName().toString()));
-            headers.setLastModified(Files.getLastModifiedTime(path).toInstant());
+            headers.setContentDisposition(HTTPUtils.attachmentDisposition(download.getName()));
+            headers.setContentType(MediaTypeUtils.fromFileName(download.getName()));
+            headers.setLastModified(timestamp);
             return headers;
         }
     }

@@ -31,11 +31,9 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.exception.DownloadNotFound;
 import org.jetbrains.annotations.NotNull;
 
-import java.nio.file.Path;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
@@ -136,13 +134,8 @@ public class Version {
     }
 
     @NotNull
-    public Path getDownloadPathFor(@NotNull Distribution distribution, @NotNull AppConfiguration config) {
-        return config.getStoragePath()
-                .resolve(project.getSlug())
-                .resolve(channel.getName())
-                .resolve(name)
-                .resolve(distribution.getName())
-                .resolve(getDownloadFor(distribution).getName());
+    public String getDownloadObjectName(@NotNull Distribution dist, @NotNull Download download) {
+        return String.join("/", project.getSlug(), channel.getName(), name, dist.getName(), download.getName());
     }
 
 }

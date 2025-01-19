@@ -27,10 +27,7 @@ package net.william278.backend.database.model;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.nio.charset.StandardCharsets;
 
@@ -68,6 +65,7 @@ public class Download {
     @Column(length = 4096)
     private String name;
 
+    @Setter
     @Schema(
             name = "md5",
             description = "The MD5 checksum of the file.",
@@ -83,9 +81,5 @@ public class Download {
             example = "1024"
     )
     private long fileSize;
-
-    public void setMd5(byte[] md5) {
-        this.md5 = new String(md5, StandardCharsets.UTF_8);
-    }
 
 }
