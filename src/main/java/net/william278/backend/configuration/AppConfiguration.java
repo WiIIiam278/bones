@@ -68,10 +68,13 @@ public class AppConfiguration {
     private String paypalIpnWebhookSecret;
     private String stripePaymentWebhookSecret;
 
-    private String ticketsBucketEndpoint;
-    private String ticketBucketsBucket;
-    private String ticketsBucketAccessKey;
-    private String ticketsBucketSecretKey;
-    private String ticketBucketsExpiryTime;
+    private String s3Endpoint;
+    private String s3AccessKey;
+    private String s3SecretKey;
+    private String s3AssetsBucket;
+    private String s3DownloadsBucket;
+    private String s3DownloadsExpiry;
+    private String s3TicketsBucket;
+    private String s3TicketsExpiry;
 
 }

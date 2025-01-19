@@ -37,7 +37,7 @@ import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.TicketRepository;
 import net.william278.backend.database.repository.UsersRepository;
 import net.william278.backend.exception.*;
-import net.william278.backend.service.TicketTranscriptsService;
+import net.william278.backend.service.S3Service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
@@ -52,12 +52,12 @@ public class TicketController {
 
     private final TicketRepository tickets;
     private final UsersRepository users;
-    private final TicketTranscriptsService transcripts;
+    private final S3Service s3;
 
-    public TicketController(TicketRepository tickets, UsersRepository users, TicketTranscriptsService transcripts) {
+    public TicketController(TicketRepository tickets, UsersRepository users, S3Service s3) {
         this.tickets = tickets;
         this.users = users;
-        this.transcripts = transcripts;
+        this.s3 = s3;
     }
 
     @Operation(
@@ -239,7 +239,7 @@ public class TicketController {
         }
 
         // Delete ticket transcript
-        transcripts.deleteTranscript(ticket.getId());
+        s3.deleteTranscript(ticket.getId());
         tickets.delete(ticket);
 
         return ResponseEntity.ok().build();
@@ -279,7 +279,7 @@ public class TicketController {
             throw new NoPermission();
         }
 
-        return transcripts.getTranscriptUrl(ticket.getId()).orElseThrow(TicketNotFound::new);
+        return s3.getTranscriptUrl(ticket.getId()).orElseThrow(TicketNotFound::new);
     }
 
 

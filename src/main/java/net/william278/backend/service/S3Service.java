@@ -24,16 +24,16 @@
 
 package net.william278.backend.service;
 
-import io.minio.GetPresignedObjectUrlArgs;
-import io.minio.MinioClient;
-import io.minio.RemoveObjectArgs;
+import io.minio.*;
 import io.minio.errors.*;
 import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import net.william278.backend.configuration.AppConfiguration;
+import net.william278.backend.database.model.Asset;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
@@ -42,25 +42,25 @@ import java.util.Optional;
 
 @Slf4j
 @Service
-public class TicketTranscriptsService {
+public class S3Service {
 
     private final MinioClient client;
     private final AppConfiguration config;
 
     @Autowired
-    public TicketTranscriptsService(@NotNull AppConfiguration config) {
+    public S3Service(@NotNull AppConfiguration config) {
         this.config = config;
         this.client = MinioClient.builder()
-                .endpoint(config.getTicketsBucketEndpoint())
-                .credentials(config.getTicketsBucketAccessKey(), config.getTicketsBucketSecretKey())
+                .endpoint(config.getS3Endpoint())
+                .credentials(config.getS3AccessKey(), config.getS3SecretKey())
                 .build();
     }
 
     public Optional<String> getTranscriptUrl(long ticketNumber) {
         try {
             return Optional.of(client.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
-                    .expiry(Integer.parseInt(config.getTicketBucketsExpiryTime()))
-                    .bucket(config.getTicketBucketsBucket())
+                    .expiry(Integer.parseInt(config.getS3TicketsExpiry()))
+                    .bucket(config.getS3TicketsBucket())
                     .object(getTicketObjectName(ticketNumber))
                     .method(Method.GET)
                     .build()));
@@ -75,7 +75,7 @@ public class TicketTranscriptsService {
     public void deleteTranscript(long ticketNumber) {
         try {
             client.removeObject(RemoveObjectArgs.builder()
-                    .bucket(config.getTicketBucketsBucket())
+                    .bucket(config.getS3TicketsBucket())
                     .object(getTicketObjectName(ticketNumber))
                     .build());
         } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
@@ -85,7 +85,35 @@ public class TicketTranscriptsService {
         }
     }
 
-    private String getTicketObjectName(long ticketNumber) {
+    public void uploadAsset(@NotNull MultipartFile file, @NotNull Asset asset) {
+        try {
+            client.uploadObject(UploadObjectArgs.builder()
+                    .bucket(config.getS3AssetsBucket())
+                    .object(asset.getName())
+                    .contentType(file.getContentType())
+                    .build());
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
+                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
+                 ServerException e) {
+            log.warn("Failed to create or upload asset '{}'", asset.getName(), e);
+        }
+    }
+
+    public void deleteAsset(@NotNull Asset asset) {
+        try {
+            client.removeObject(RemoveObjectArgs.builder()
+                    .object(asset.getName())
+                    .bucket(config.getS3AssetsBucket())
+                    .build());
+        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
+                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
+                 ServerException e) {
+            log.warn("Failed to delete asset '{}'", asset.getName(), e);
+        }
+    }
+
+    @NotNull
+    private static String getTicketObjectName(long ticketNumber) {
         return String.format("ticket-%04d".formatted(ticketNumber));
     }
 
