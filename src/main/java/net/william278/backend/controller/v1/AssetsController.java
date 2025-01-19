@@ -96,9 +96,9 @@ public class AssetsController {
             throw new NoPermission();
         }
         if (fileNameSearch != null && !fileNameSearch.isBlank()) {
-            return assets.findAllByNameContainingIgnoreCaseOrderByCreatedAtAsc(fileNameSearch, PageRequest.of(page, size));
+            return assets.findAllByNameContainingIgnoreCaseOrderByCreatedAtDesc(fileNameSearch, PageRequest.of(page, size));
         }
-        return assets.findAllByOrderByCreatedAtAsc(PageRequest.of(page, size));
+        return assets.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size));
     }
 
     @Operation(
@@ -147,6 +147,7 @@ public class AssetsController {
         asset.setFileSize(file.getSize());
         asset.setCreatedAt(Instant.now());
         asset.setContentType(file.getContentType());
+        assets.save(asset);
 
         s3.uploadAsset(file, asset);
         return asset;
@@ -191,6 +192,7 @@ public class AssetsController {
         }
 
         final Asset asset = assets.findByName(fileName).orElseThrow(InvalidRole::new);
+        assets.delete(asset);
         s3.deleteAsset(asset);
         return asset;
     }
