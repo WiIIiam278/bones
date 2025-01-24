@@ -64,7 +64,7 @@ public class AppConfiguration {
     private String sendEmailFrom;
     private String sendEmailReplyTo;
 
-    private String paypalIpnWebhookSecret;
+    private String paypalWebhookSecret;
     private String stripePaymentWebhookSecret;
 
     private String s3Endpoint;

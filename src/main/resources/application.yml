@@ -94,7 +94,7 @@ app:
   sendgrid-api-key: ${SENDGRID_API_KEY}
   send-email-from: ${SEND_EMAIL_FROM}
   send-email-reply-to: ${SEND_EMAIL_REPLY_TO}
-  paypal-ipn-webhook-secret: ${PAYPAL_IPN_WEBHOOK_SECRET}
+  paypal-webhook-secret: ${PAYPAL_WEBHOOK_SECRET}
   stripe-payment-webhook-secret: ${STRIPE_WEBHOOK_SECRET}
   s3-endpoint: ${S3_ENDPOINT}
   s3-access-key: ${S3_ACCESS_KEY}

@@ -50,6 +50,8 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
@@ -152,6 +154,7 @@ public class EmailService {
     @NotNull
     private Mail createTransactionEmail(@NotNull Transaction trans) {
         final Project project = Objects.requireNonNull(trans.getProjectGrant(), "Project is null");
+        final LocalDateTime timestamp = LocalDateTime.ofInstant(trans.getTimestamp(), ZoneId.systemDefault());
         final Mail message = new Mail(
                 sendFromEmail,
                 "📦 Your %s purchase receipt - William278.net".formatted(project.getMetadata().getName()),
@@ -162,7 +165,7 @@ public class EmailService {
                         "%%_RESOURCE_PURCHASE_PRICE_%%", "%s %s".formatted(trans.getAmount(), trans.getCurrency()),
                         "%%_RESOURCE_MARKETPLACE_%%", trans.getMarketplace(),
                         "%%_RESOURCE_TRANSACTION_ID_%%", trans.getTransactionReference(),
-                        "%%_RESOURCE_TRANSACTION_TIME_%%", TIME_FORMATTER.format(trans.getTimestamp())
+                        "%%_RESOURCE_TRANSACTION_TIME_%%", TIME_FORMATTER.format(timestamp)
                 )))
         );
         message.setReplyTo(replyToEmail);
