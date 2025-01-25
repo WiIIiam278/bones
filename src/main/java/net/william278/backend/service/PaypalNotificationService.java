@@ -78,19 +78,24 @@ public class PaypalNotificationService implements TransactionHandlerService {
 
         @Nullable
         public Transaction toTransaction(ProjectRepository projects) {
-            final BigDecimal decimalAmount = BigDecimalParser.parse(amount);
-            return Transaction.builder()
-                    .processor(Transaction.Processor.PAYPAL)
-                    .transactionReference(id)
-                    .marketplace(marketplace)
-                    .email(email)
-                    .timestamp(Instant.now())
-                    .projectGrant(getProjectGrant(projects, projectSlug).orElse(null))
-                    .refunded(false)
-                    .currency(getValidCurrency(currency).toUpperCase(Locale.ENGLISH))
-                    .amount(decimalAmount).refunded(decimalAmount.doubleValue() < 0.0d)
-                    .passedValidation(true)
-                    .build();
+            try {
+                final BigDecimal decimalAmount = BigDecimalParser.parse(amount);
+                return Transaction.builder()
+                        .processor(Transaction.Processor.PAYPAL)
+                        .transactionReference(id)
+                        .marketplace(marketplace)
+                        .email(email)
+                        .timestamp(Instant.now())
+                        .projectGrant(getProjectGrant(projects, projectSlug).orElse(null))
+                        .refunded(false)
+                        .currency(getValidCurrency(currency).toUpperCase(Locale.ENGLISH))
+                        .amount(decimalAmount).refunded(decimalAmount.doubleValue() < 0.0d)
+                        .passedValidation(true)
+                        .build();
+            } catch (NumberFormatException e) {
+                log.error("Failed to parse amount {}", amount, e);
+                return null;
+            }
         }
 
         private static Optional<Project> getProjectGrant(ProjectRepository projects, String projectSlug) {
