@@ -59,7 +59,7 @@ import java.util.concurrent.TimeUnit;
 @Service
 public class EmailService {
 
-    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy, H[H]:mm");
+    private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
     private final Cache<String, String> verificationCodes;
     private final AppConfiguration config;
