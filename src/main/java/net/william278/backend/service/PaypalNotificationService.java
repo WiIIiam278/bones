@@ -79,21 +79,21 @@ public class PaypalNotificationService implements TransactionHandlerService {
         @Nullable
         public Transaction toTransaction(ProjectRepository projects) {
             try {
-                final BigDecimal decimalAmount = BigDecimalParser.parse(amount);
+                final BigDecimal decimalAmount = BigDecimalParser.parse(amount.trim());
                 return Transaction.builder()
                         .processor(Transaction.Processor.PAYPAL)
-                        .transactionReference(id)
-                        .marketplace(marketplace)
-                        .email(email)
+                        .transactionReference(id.trim())
+                        .marketplace(marketplace.trim())
+                        .email(email.trim())
                         .timestamp(Instant.now())
-                        .projectGrant(getProjectGrant(projects, projectSlug).orElse(null))
+                        .projectGrant(getProjectGrant(projects, projectSlug.trim()).orElse(null))
                         .refunded(false)
-                        .currency(getValidCurrency(currency).toUpperCase(Locale.ENGLISH))
+                        .currency(getValidCurrency(currency.trim()).toUpperCase(Locale.ENGLISH))
                         .amount(decimalAmount).refunded(decimalAmount.doubleValue() < 0.0d)
                         .passedValidation(true)
                         .build();
             } catch (NumberFormatException e) {
-                log.error("Failed to parse amount {}", amount, e);
+                log.error("Failed to parse amount {}", amount.trim(), e);
                 return null;
             }
         }
