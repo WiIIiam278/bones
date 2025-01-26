@@ -41,7 +41,7 @@ export const PurchaseReceipt = () => (
                         </Column>
                         <Column style={receiptDetails}>
                             <Text style={receiptResourceName}><strong>%%_RESOURCE_NAME_%%</strong></Text>
-                            <Text style={receiptLine}>Price: %%_RESOURCE_PURCHASE_PRICE_%%</Text>
+                            <Text style={receiptLine}>Purchased for: %%_RESOURCE_PURCHASE_PRICE_%%</Text>
                             <Text style={receiptLine}>Marketplace: %%_RESOURCE_MARKETPLACE_%%</Text>
                             <Text style={receiptLine}>ID: %%_RESOURCE_TRANSACTION_ID_%%</Text>
                             <Text style={receiptLine}>Time: %%_RESOURCE_TRANSACTION_TIME_%%</Text>
@@ -154,8 +154,7 @@ const receiptResourceName = {
 
 const receiptLine = {
     margin: "0",
-    color: "#818181",
-    fontFamily: "Consolas,Courier New,monospace",
+    color: "#818181"
 }
 
 const button = {
