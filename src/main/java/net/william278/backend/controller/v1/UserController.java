@@ -377,7 +377,11 @@ public class UserController {
     )
     @ApiResponse(
             responseCode = "302",
-            description = "The email was verified. Redirecting to the user's account page."
+            description = "The email was verified. Redirecting accordingly..."
+    )
+    @ApiResponse(
+            responseCode = "302",
+            description = "The verification code is invalid. Redirecting accordingly..."
     )
     @ApiResponse(
             responseCode = "200",
@@ -404,7 +408,13 @@ public class UserController {
             boolean redirect
     ) {
         if (!emailService.verifyEmail(verificationCode, userId)) {
-            throw new InvalidMailCode();
+            if (!redirect) {
+                throw new InvalidMailCode();
+            }
+            return ResponseEntity.status(HttpStatus.FOUND)
+                    .location(URI.create("%s/account/email?status=expired"
+                            .formatted(config.getFrontendBaseUrl().toString())))
+                    .build();
         }
         final User user = users.findById(userId).orElseThrow(UserNotFound::new);
         user.setEmailVerified(true);
@@ -414,7 +424,8 @@ public class UserController {
             return ResponseEntity.ok().build();
         }
         return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create("%s/account/logout".formatted(config.getFrontendBaseUrl().toString())))
+                .location(URI.create("%s/account/email?status=verified"
+                        .formatted(config.getFrontendBaseUrl().toString())))
                 .build();
     }
 
