@@ -33,6 +33,7 @@ import lombok.*;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
+import java.net.URI;
 import java.time.Instant;
 
 @Schema(
@@ -80,16 +81,43 @@ public class Transaction {
     @Nullable
     private Project projectGrant;
 
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JsonIgnore
+    @Nullable
+    private User grantedTo;
+
     @SuppressWarnings("unused")
     @JsonSerialize
-    @JsonAlias("projectGrant")
+    @JsonAlias("projectGrantSlug")
     @Nullable
     @Schema(
-            name = "projectGrant",
+            name = "projectGrantSlug",
             description = "The project this transaction grants"
     )
-    public String getProjectEmailSubs() {
+    public String getProjectGrantSlug() {
         return projectGrant != null ? projectGrant.getSlug() : null;
+    }
+
+    @JsonSerialize
+    @JsonAlias("grantedToName")
+    @Nullable
+    @Schema(
+            name = "grantedToName",
+            description = "The user this transaction granted to"
+    )
+    public String getGrantedToName() {
+        return grantedTo != null ? grantedTo.getName() : null;
+    }
+
+    @JsonSerialize
+    @JsonAlias("grantedToAvatar")
+    @Nullable
+    @Schema(
+            name = "grantedToAvatar",
+            description = "The user avatar URL this transaction granted to"
+    )
+    public URI getGrantedToAvatar() {
+        return grantedTo != null ? grantedTo.getAvatar() : null;
     }
 
     public enum Processor {

@@ -29,8 +29,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.nio.charset.StandardCharsets;
-
 @Schema(
         name = "Download",
         description = "A downloadable file, associated with a version."

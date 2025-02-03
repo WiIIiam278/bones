@@ -26,6 +26,8 @@ package net.william278.backend.database.repository;
 
 import net.william278.backend.database.model.Transaction;
 import org.jetbrains.annotations.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 
 import java.util.Optional;
@@ -33,5 +35,14 @@ import java.util.Optional;
 public interface TransactionRepository extends CrudRepository<Transaction, Integer> {
 
     Optional<Transaction> findByTransactionReference(@NotNull String reference);
+
+    @NotNull
+    Iterable<Transaction> findAllByEmailAndGrantedToIsNullAndPassedValidationIsTrueAndRefundedIsFalseAndProjectGrantIsNotNull(@NotNull String email);
+
+    @NotNull
+    Page<Transaction> findAllByEmailContainingIgnoreCaseOrderByTimestampDesc(@NotNull String email, @NotNull Pageable pageable);
+
+    @NotNull
+    Page<Transaction> findAllByOrderByTimestampDesc(@NotNull Pageable pageable);
 
 }

@@ -84,11 +84,11 @@ public class DiscordRolesService {
             // Get linked projects and update
             final Set<Project> linkedProjects = getLinkedProjects(member.roles());
             if (user.addPurchases(linkedProjects)) {
-                log.info("Fetched roles for user {} to {}", user.getName(), user.getPurchases());
+                log.info("Applied project grants from Discord roles for {}: {}", user.getName(), user.getPurchases());
                 return user;
             }
         } catch (Throwable e) {
-            log.error("Failed to update roles for user {}", user.getName(), e);
+            log.error("Failed to update project grants from Discord for {}", user.getName(), e);
         }
         return user;
     }

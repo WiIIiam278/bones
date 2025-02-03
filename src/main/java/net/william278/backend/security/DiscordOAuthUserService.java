@@ -31,6 +31,7 @@ import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.UsersRepository;
 import net.william278.backend.service.DiscordRolesService;
+import net.william278.backend.service.TransactionGrantsService;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.security.oauth2.client.userinfo.DefaultOAuth2UserService;
 import org.springframework.security.oauth2.client.userinfo.OAuth2UserRequest;
@@ -47,7 +48,9 @@ public class DiscordOAuthUserService extends DefaultOAuth2UserService {
 
     private final AppConfiguration config;
     private final UsersRepository users;
+
     private final DiscordRolesService discordRoles;
+    private final TransactionGrantsService transactions;
 
     @Override
     @SneakyThrows
@@ -65,10 +68,10 @@ public class DiscordOAuthUserService extends DefaultOAuth2UserService {
             return oAuthUser;
         }
 
-        return users.save(discordRoles.updateMemberRoles(
+        return users.save(transactions.applyTransactionGrants(discordRoles.updateMemberRoles(
                 users.findById(id).map(u -> updateUser(u, oAuthUser)).orElseGet(() -> createUser(oAuthUser)),
                 accessToken
-        ));
+        )));
     }
 
     @NotNull
