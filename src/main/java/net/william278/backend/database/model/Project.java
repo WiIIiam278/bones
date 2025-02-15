@@ -351,6 +351,10 @@ public class Project implements Comparable<Project> {
             SVG,
             @Schema(description = "A bitmap PNG icon.")
             PNG,
+            @Schema(description = "A transparent background scalable vector graphic icon.")
+            SVG_TRANSPARENT,
+            @Schema(description = "A transparent background bitmap PNG icon.")
+            PNG_TRANSPARENT,
         }
 
         @Schema(
