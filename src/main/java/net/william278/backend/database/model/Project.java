@@ -291,6 +291,13 @@ public class Project implements Comparable<Project> {
         private boolean documentation = false;
 
         @Schema(
+                name = "documentationNav",
+                description = "Map of navigation sections to documentation navigation links"
+        )
+        @Builder.Default
+        private List<DocsNavSection> documentationNav = new ArrayList<>();
+
+        @Schema(
                 name = "listDownloads",
                 description = "Whether the project has a downloads page.",
                 example = "true"
@@ -340,6 +347,31 @@ public class Project implements Comparable<Project> {
 
         public Optional<String> getLinkUrlById(@NotNull String id) {
             return links.stream().filter(link -> link.id().equals(id)).findFirst().map(Link::url);
+        }
+
+        @Schema(
+                name = "DocsNavSection",
+                description = "Navigation section for project docs."
+        )
+        record DocsNavSection(
+                int order,
+                @NotNull String name,
+                @NotNull List<DocsNav> children
+        ) {
+
+        }
+
+        @Schema(
+                name = "DocsNav",
+                description = "Navigation URL for project docs."
+        )
+        record DocsNav(
+                int order,
+                @NotNull String url,
+                @NotNull String title,
+                @NotNull String icon,
+                @NotNull List<DocsNav> children
+        ) {
         }
 
         @Schema(
