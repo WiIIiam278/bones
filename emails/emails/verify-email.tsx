@@ -1,15 +1,4 @@
-import {
-    Body,
-    Button,
-    Container,
-    Head,
-    Html,
-    Img,
-    Link,
-    Preview,
-    Section,
-    Text,
-} from "@react-email/components";
+import {Body, Button, Container, Head, Html, Img, Link, Preview, Section, Text,} from "@react-email/components";
 import * as React from "react";
 
 export const VerifyEmail = () => (

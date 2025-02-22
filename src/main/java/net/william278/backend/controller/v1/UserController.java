@@ -40,6 +40,7 @@ import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.database.repository.UsersRepository;
 import net.william278.backend.exception.*;
 import net.william278.backend.service.EmailService;
+import net.william278.backend.service.TransactionGrantsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,12 +48,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.crypto.codec.Utf8;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.security.MessageDigest;
+import java.util.*;
 
 @RestController
 @Tags(value = @Tag(name = "Users"))
@@ -63,13 +64,15 @@ public class UserController {
     private final ProjectRepository projects;
     private final EmailService emailService;
     private final AppConfiguration config;
+    private final TransactionGrantsService transactionGrants;
 
     @Autowired
-    public UserController(UsersRepository users, ProjectRepository projects, EmailService emailService, AppConfiguration config) {
+    public UserController(UsersRepository users, ProjectRepository projects, EmailService emailService, AppConfiguration config, TransactionGrantsService transactionGrants) {
         this.users = users;
         this.projects = projects;
         this.emailService = emailService;
         this.config = config;
+        this.transactionGrants = transactionGrants;
     }
 
     @Operation(
@@ -147,6 +150,52 @@ public class UserController {
             throw new NotAuthenticated();
         }
         if (!principal.isStaff()) {
+            throw new NoPermission();
+        }
+        return users.findById(userId).orElseThrow(UserNotFound::new);
+    }
+
+    @Operation(
+            summary = "Get a specific user by their ID with an API key.",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The user"
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user is not a staff member.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The user was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @GetMapping(
+            value = "/v1/users/{userId}/api",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin
+    public User getUser(
+            @RequestHeader("X-Api-Key") String apiKey,
+
+            @Parameter(description = "The ID of the user to get.")
+            @PathVariable String userId
+    ) {
+        if (config.getApiSecret() == null) {
+            throw new IllegalStateException("API key is not set on server.");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new NotAuthenticated();
+        }
+        if (!MessageDigest.isEqual(Utf8.encode(config.getApiSecret()), Utf8.encode(apiKey))) {
             throw new NoPermission();
         }
         return users.findById(userId).orElseThrow(UserNotFound::new);
@@ -253,6 +302,65 @@ public class UserController {
             return users.save(user);
         }
         return user;
+    }
+
+    @Operation(
+            summary = "Get the projects a user has purchased with an API key, as a map of purchases to Discord role IDs.",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The user with their updated list of purchased projects."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user is not a staff member or admin.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The user was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @GetMapping(
+            value = "/v1/users/{userId}/purchases/api",
+            produces = {MediaType.APPLICATION_JSON_VALUE},
+            consumes = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public Map<String, String> getUserPurchases(
+            @RequestHeader("X-Api-Key") String apiKey,
+
+            @Parameter(description = "The ID of the user to get.")
+            @PathVariable String userId
+    ) {
+        if (config.getApiSecret() == null) {
+            throw new IllegalStateException("API key is not set on server.");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new NotAuthenticated();
+        }
+        if (!MessageDigest.isEqual(Utf8.encode(config.getApiSecret()), Utf8.encode(apiKey))) {
+            throw new NoPermission();
+        }
+
+        // Refresh purchases
+        final User user = transactionGrants.applyTransactionGrants(users.findById(userId)
+                .orElseThrow(UserNotFound::new));
+
+        // Calculate linked roles map
+        final Map<String, String> purchasesToRoles = new HashMap<>();
+        user.getPurchases().forEach(purchase -> projects.findById(purchase).ifPresent(project -> {
+            final String linkedRole = project.getMetadata().getLinkedDiscordRole();
+            if (linkedRole != null) {
+                purchasesToRoles.put(purchase, linkedRole);
+            }
+        }));
+        return purchasesToRoles;
     }
 
     @Operation(
@@ -369,6 +477,52 @@ public class UserController {
         principal.setEmailVerified(false);
         final User newUser = users.save(principal);
         emailService.sendVerificationCodeEmail(principal);
+        return newUser;
+    }
+
+    @Operation(
+            summary = "Request an email verification code for a user by ID.",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The user with their updated email."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @PostMapping(
+            value = "/v1/users/{userId}/email/api",
+            produces = {MediaType.APPLICATION_JSON_VALUE},
+            consumes = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    public User updateUserEmailApi(
+            @RequestHeader("X-Api-Key") String apiKey,
+
+            @Parameter(description = "The ID of the user to request email verification for.")
+            @PathVariable String userId,
+
+            @RequestBody
+            @Email
+            String email
+    ) {
+        if (config.getApiSecret() == null) {
+            throw new IllegalStateException("API key is not set on server.");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new NotAuthenticated();
+        }
+        if (!MessageDigest.isEqual(Utf8.encode(config.getApiSecret()), Utf8.encode(apiKey))) {
+            throw new NoPermission();
+        }
+
+        final User user = users.findById(userId).orElseThrow(UserNotFound::new);
+        user.setEmail(email);
+        user.setEmailVerified(false);
+        final User newUser = users.save(user);
+        emailService.sendVerificationCodeEmail(user);
         return newUser;
     }
 
