@@ -89,7 +89,8 @@ public class AssetsController {
             @AuthenticationPrincipal User principal,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "15") int size,
-            @RequestParam(value = "fileNameSearch", defaultValue = "") String fileNameSearch
+            @RequestParam(value = "fileNameSearch", defaultValue = "") String fileNameSearch,
+            @RequestParam(value = "contentTypeFilter", defaultValue = "") String contentTypeFilter
     ) {
         if (principal == null) {
             throw new NotAuthenticated();
@@ -97,8 +98,16 @@ public class AssetsController {
         if (!principal.isStaff()) {
             throw new NoPermission();
         }
+
+        // Return search
         if (fileNameSearch != null && !fileNameSearch.isBlank()) {
+            if (contentTypeFilter != null && !contentTypeFilter.isBlank()) {
+                return assets.findAllByContentTypeContainingIgnoreCaseAndNameContainingIgnoreCaseOrderByCreatedAtDesc(fileNameSearch, contentTypeFilter, PageRequest.of(page, size));
+            }
             return assets.findAllByNameContainingIgnoreCaseOrderByCreatedAtDesc(fileNameSearch, PageRequest.of(page, size));
+        }
+        if (contentTypeFilter != null && !contentTypeFilter.isBlank()) {
+            return assets.findAllByContentTypeContainingIgnoreCaseOrderByCreatedAtDesc(contentTypeFilter, PageRequest.of(page, size));
         }
         return assets.findAllByOrderByCreatedAtDesc(PageRequest.of(page, size));
     }

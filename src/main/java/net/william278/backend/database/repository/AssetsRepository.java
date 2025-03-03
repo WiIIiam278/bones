@@ -38,8 +38,17 @@ public interface AssetsRepository extends JpaRepository<Asset, String> {
     Optional<Asset> findByName(@NotNull String name);
 
     @NotNull
+    Page<Asset> findAllByOrderByCreatedAtDesc(@NotNull Pageable pageable);
+
+    @NotNull
+    Page<Asset> findAllByContentTypeContainingIgnoreCaseOrderByCreatedAtDesc(@NotNull String contentType, @NotNull Pageable pageable);
+
+    @NotNull
     Page<Asset> findAllByNameContainingIgnoreCaseOrderByCreatedAtDesc(@NotNull String name, @NotNull Pageable pageable);
 
     @NotNull
-    Page<Asset> findAllByOrderByCreatedAtDesc(@NotNull Pageable pageable);
+    Page<Asset> findAllByContentTypeContainingIgnoreCaseAndNameContainingIgnoreCaseOrderByCreatedAtDesc(@NotNull String contentType,
+                                                                                    @NotNull String name,
+                                                                                    @NotNull Pageable pageable);
+
 }
