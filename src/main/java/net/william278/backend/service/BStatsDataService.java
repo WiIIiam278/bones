@@ -59,6 +59,11 @@ public class BStatsDataService implements StatsProvider {
         });
     }
 
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
     private Optional<String> getBStatsId(@NotNull Project project) {
         return project.getMetadata().getLinkUrlById("bstats")
                 .map((url) -> {

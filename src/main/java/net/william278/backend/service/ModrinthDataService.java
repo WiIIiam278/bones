@@ -31,6 +31,7 @@ import masecla.modrinth4j.main.ModrinthAPI;
 import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.Project;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,16 +41,22 @@ import java.util.Optional;
 @Service
 public class ModrinthDataService implements StatsProvider {
 
-    private final ModrinthAPI modrinth;
+    private final @Nullable String modrinthApiToken;
+    private ModrinthAPI modrinth;
 
     @Autowired
     @SneakyThrows
     public ModrinthDataService(@NotNull AppConfiguration config) {
+        this.modrinthApiToken = config.getModrinthApiToken();
+        if (modrinthApiToken == null || modrinthApiToken.isEmpty()) {
+            return;
+        }
+
         this.modrinth = ModrinthAPI.rateLimited(
                 UserAgent.builder()
                         .authorUsername("william278").contact("will27528@gmail.com")
                         .projectName("william278-backend").build(),
-                config.getModrinthApiToken()
+                modrinthApiToken
         );
     }
 
@@ -67,6 +74,11 @@ public class ModrinthDataService implements StatsProvider {
                     }
                 })
                 .map(p -> Project.Stats.builder().downloadCount(p.getDownloads()).build());
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return modrinth != null;
     }
 
     private Optional<String> getModrinthSlug(@NotNull Project project) {

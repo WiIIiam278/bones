@@ -35,6 +35,7 @@ import com.sendgrid.helpers.mail.Mail;
 import com.sendgrid.helpers.mail.objects.Content;
 import com.sendgrid.helpers.mail.objects.Email;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.Project;
@@ -62,26 +63,37 @@ public class EmailService {
 
     private static final DateTimeFormatter TIME_FORMATTER = DateTimeFormatter.ofPattern("dd MMM yyyy, HH:mm");
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
-    private final Cache<String, String> verificationCodes;
-    private final AppConfiguration config;
 
-    private final SendGrid sendGrid;
-    private final Email sendFromEmail;
-    private final Email replyToEmail;
+    private Cache<String, String> verificationCodes;
+    private AppConfiguration config;
+    private SendGrid sendGrid;
+    private Email sendFromEmail;
+    private Email replyToEmail;
+
+    @Getter
+    private final boolean enabled;
 
     @Autowired
     public EmailService(@NotNull AppConfiguration config) {
-        this.verificationCodes = CacheBuilder.newBuilder()
-                .expireAfterWrite(1, TimeUnit.HOURS)
-                .build();
-        this.config = config;
+        // Check is enabled
+        this.enabled = config.getSendgridApiKey() != null && !config.getSendgridApiKey().isEmpty();
+        if (!this.enabled) {
+            return;
+        }
 
+        this.verificationCodes = CacheBuilder.newBuilder().expireAfterWrite(1, TimeUnit.HOURS).build();
+        this.config = config;
         this.sendGrid = new SendGrid(config.getSendgridApiKey());
         this.sendFromEmail = new Email(config.getSendEmailFrom(), "William278.net");
         this.replyToEmail = new Email(config.getSendEmailReplyTo(), "William278.net");
     }
 
     public void sendVerificationCodeEmail(@NotNull User user) {
+        if (!enabled) {
+            log.info("Email service disabled, not sending verification code email");
+            return;
+        }
+
         final Map<String, String> map = verificationCodes.asMap();
         if (map.containsValue(user.getId())) {
             verificationCodes.invalidate(map.get(user.getId()));
@@ -95,6 +107,11 @@ public class EmailService {
     }
 
     public void sendTransactionEmail(Transaction transaction) {
+        if (!enabled) {
+            log.info("Email service disabled, not sending receipt email");
+            return;
+        }
+
         if (transaction.getProjectGrant() == null) {
             return;
         }
@@ -118,6 +135,11 @@ public class EmailService {
     }
 
     public boolean verifyEmail(@NotNull String code, @NotNull String userId) {
+        if (!enabled) {
+            log.info("Email service disabled, not verifying email");
+            return false;
+        }
+
         final Map<String, String> map = verificationCodes.asMap();
         if (map.containsKey(code) && map.get(code).equals(userId)) {
             log.info("Verified mail verification code {} for user {}", code, userId);

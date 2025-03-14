@@ -46,11 +46,19 @@ import java.util.Optional;
 @Service
 public class S3Service {
 
-    private final MinioClient client;
-    private final AppConfiguration config;
+    private final boolean enabled;
+
+    private MinioClient client;
+    private AppConfiguration config;
 
     @Autowired
     public S3Service(@NotNull AppConfiguration config) {
+        this.enabled = config.getS3AccessKey() != null && config.getS3SecretKey() != null
+                && !config.getS3AccessKey().isEmpty() && !config.getS3SecretKey().isEmpty();
+        if (!enabled) {
+            return;
+        }
+
         this.config = config;
         this.client = MinioClient.builder()
                 .endpoint(config.getS3Endpoint())
@@ -59,6 +67,11 @@ public class S3Service {
     }
 
     public Optional<String> getTranscriptUrl(long ticketNumber) {
+        if (!enabled) {
+            log.info("S3 disabled, Skipping getting transcript URL for ticket #{}", ticketNumber);
+            return Optional.empty();
+        }
+
         try {
             return Optional.of(client.getPresignedObjectUrl(GetPresignedObjectUrlArgs.builder()
                     .expiry(Integer.parseInt(config.getS3TicketsExpiry()))
@@ -75,6 +88,11 @@ public class S3Service {
     }
 
     public void deleteTranscript(long ticketNumber) {
+        if (!enabled) {
+            log.info("S3 disabled, Skipping deleting transcript #{}", ticketNumber);
+            return;
+        }
+
         try {
             client.removeObject(RemoveObjectArgs.builder()
                     .bucket(config.getS3TicketsBucket())
@@ -88,6 +106,11 @@ public class S3Service {
     }
 
     public void uploadAsset(@NotNull MultipartFile file, @NotNull Asset asset) {
+        if (!enabled) {
+            log.info("S3 disabled, skipping asset upload for {}", asset.getName());
+            return;
+        }
+
         try {
             client.putObject(PutObjectArgs.builder()
                     .stream(file.getInputStream(), file.getSize(), -1)
@@ -103,6 +126,11 @@ public class S3Service {
     }
 
     public void deleteAsset(@NotNull Asset asset) {
+        if (!enabled) {
+            log.info("S3 disabled, skipping asset deletion for {}", asset.getName());
+            return;
+        }
+
         try {
             client.removeObject(RemoveObjectArgs.builder()
                     .object(asset.getName())
@@ -117,6 +145,11 @@ public class S3Service {
 
     public void uploadVersion(@NotNull InputStream versionStream, long size,
                               @NotNull String contentType, @NotNull String objectName) {
+        if (!enabled) {
+            log.info("S3 disabled, skipping version upload for {}", objectName);
+            return;
+        }
+
         try {
             client.putObject(PutObjectArgs.builder()
                     .stream(versionStream, size, -1)
@@ -133,6 +166,11 @@ public class S3Service {
 
     @Nullable
     public InputStream downloadVersion(@NotNull String objectName) {
+        if (!enabled) {
+            log.info("S3 disabled, cannot download version {}", objectName);
+            return null;
+        }
+
         try {
             return client.getObject(GetObjectArgs.builder()
                     .bucket(config.getS3DownloadsBucket())
@@ -150,4 +188,5 @@ public class S3Service {
     private static String getTicketObjectName(long ticketNumber) {
         return String.format("ticket-%04d".formatted(ticketNumber));
     }
+
 }

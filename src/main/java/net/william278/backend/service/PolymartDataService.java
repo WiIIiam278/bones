@@ -59,6 +59,11 @@ public class PolymartDataService implements StatsProvider {
         );
     }
 
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
     private Optional<String> getPolymartId(@NotNull Project project) {
         return project.getMetadata().getLinkUrlById("polymart")
                 .map((url) -> {

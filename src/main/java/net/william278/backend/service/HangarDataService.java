@@ -58,6 +58,11 @@ public class HangarDataService implements StatsProvider {
         );
     }
 
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
     private Optional<String> getHangarSlug(@NotNull Project project) {
         return project.getMetadata().getLinkUrlById("hangar")
                 .map((url) -> {

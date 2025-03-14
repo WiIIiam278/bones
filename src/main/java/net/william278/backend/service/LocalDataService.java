@@ -51,4 +51,9 @@ public class LocalDataService implements StatsProvider {
                 .build());
     }
 
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
 }

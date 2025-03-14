@@ -81,6 +81,7 @@ public class StatsService {
     @NotNull
     private Project.Stats getStatsNow(@NotNull Project project) {
         return providers.stream()
+                .filter(StatsProvider::isEnabled)
                 .map((service) -> service.getStats(project))
                 .filter(Optional::isPresent).map(Optional::get)
                 .reduce(Project.Stats::combine)

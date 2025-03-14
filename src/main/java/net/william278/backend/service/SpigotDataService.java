@@ -60,6 +60,11 @@ public class SpigotDataService implements StatsProvider {
         );
     }
 
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
     private Optional<String> getSpigotId(@NotNull Project project) {
         return project.getMetadata().getLinkUrlById("spigot")
                 .map((url) -> {

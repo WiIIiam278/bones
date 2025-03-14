@@ -38,4 +38,6 @@ public interface StatsProvider {
 
     Optional<Project.Stats> getStats(@NotNull Project project);
 
+    boolean isEnabled();
+
 }

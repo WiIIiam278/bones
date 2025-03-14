@@ -30,6 +30,7 @@ import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.Project;
 import net.william278.backend.util.HTTPUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.kohsuke.github.*;
 import org.kohsuke.github.extras.okhttp3.OkHttpGitHubConnector;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,11 +48,18 @@ import java.util.concurrent.atomic.AtomicLong;
 public class GitHubDataService implements StatsProvider {
 
     private final static int PAGE_SIZE = 50;
-    private final GitHub github;
+    private final @Nullable String gitHubToken;
+
+    private GitHub github;
 
     @Autowired
     @SneakyThrows
     public GitHubDataService(@NotNull AppConfiguration config) {
+        this.gitHubToken = config.getGithubApiToken();
+        if (gitHubToken == null || gitHubToken.isEmpty()) {
+            return;
+        }
+
         this.github = new GitHubBuilder()
                 .withOAuthToken(config.getGithubApiToken())
                 .withConnector(new OkHttpGitHubConnector(HTTPUtils.createCachingClient("github")))
@@ -68,6 +76,11 @@ public class GitHubDataService implements StatsProvider {
                 return Project.Stats.builder().build();
             }
         });
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return github != null;
     }
 
     public Optional<String> getReadme(@NotNull Project project) {
@@ -124,7 +137,6 @@ public class GitHubDataService implements StatsProvider {
         final String repoId = getRepositoryId(project).orElseThrow(IllegalArgumentException::new);
         return github.getRepository(repoId).listCommits().toList();
     }
-
 
 
 }
