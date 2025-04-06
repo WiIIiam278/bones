@@ -30,6 +30,8 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.repository.CrudRepository;
 
+import java.time.Instant;
+import java.util.List;
 import java.util.Optional;
 
 public interface TransactionRepository extends CrudRepository<Transaction, Integer> {
@@ -44,5 +46,8 @@ public interface TransactionRepository extends CrudRepository<Transaction, Integ
 
     @NotNull
     Page<Transaction> findAllByOrderByTimestampDesc(@NotNull Pageable pageable);
+
+    @NotNull
+    List<Transaction> findAllByTimestampAfterAndProjectGrantIsNotNullOrderByTimestampDesc(@NotNull Instant after);
 
 }
