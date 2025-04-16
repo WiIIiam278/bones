@@ -25,33 +25,21 @@
 package net.william278.backend.controller.v1;
 
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.tags.Tags;
-import jakarta.validation.constraints.Pattern;
-import net.william278.backend.database.model.Asset;
-import net.william278.backend.database.model.Project;
 import net.william278.backend.database.model.User;
-import net.william278.backend.database.repository.AssetsRepository;
 import net.william278.backend.exception.ErrorResponse;
-import net.william278.backend.exception.InvalidRole;
 import net.william278.backend.exception.NoPermission;
 import net.william278.backend.exception.NotAuthenticated;
 import net.william278.backend.service.ChartService;
-import net.william278.backend.service.S3Service;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-
-import java.time.Instant;
 
 @RestController
 @Tags(value = @Tag(name = "Charts"))
@@ -84,7 +72,7 @@ public class ChartsController {
             content = @Content(schema = @Schema(implementation = ErrorResponse.class))
     )
     @CrossOrigin
-    public ChartService.Chart findPaginated(
+    public ChartService.Chart getTransactionsChart(
             @AuthenticationPrincipal User principal,
             @RequestParam(value = "pastDays", defaultValue = "30") int pastDays,
             @RequestParam(value = "dayGrouping", defaultValue = "7") int dayGrouping
@@ -95,7 +83,7 @@ public class ChartsController {
         if (!principal.isAdmin()) {
             throw new NoPermission();
         }
-        return charts.getTransactionsLineChart(pastDays, dayGrouping);
+        return charts.getTransactionsChart(pastDays, dayGrouping);
     }
 
 }

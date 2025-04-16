@@ -32,6 +32,7 @@ import net.william278.backend.database.repository.ProjectRepository;
 import net.william278.backend.database.repository.TransactionRepository;
 import org.apache.commons.compress.utils.Lists;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -40,7 +41,6 @@ import java.text.NumberFormat;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
@@ -48,7 +48,7 @@ import java.util.*;
 @Service
 public class ChartService {
 
-    private static final DateTimeFormatter DAY_FORMATTER = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT)
+    private static final DateTimeFormatter DAY_FORMATTER = DateTimeFormatter.ofPattern("dd MMM")
             .withLocale(Locale.UK).withZone(ZoneId.systemDefault());
     private static final DateTimeFormatter MONTH_FORMATTER = DateTimeFormatter.ofPattern("MMM")
             .withLocale(Locale.UK).withZone(ZoneId.systemDefault());
@@ -65,12 +65,12 @@ public class ChartService {
     }
 
     @NotNull
-    public Chart getTransactionsLineChart(long numberPastDays, long daysPerDataPoint) {
+    public Chart getTransactionsChart(int numberPastDays, int daysPerDataPoint) {
         final List<Transaction> found = transactions
                 .findAllByTimestampAfterAndProjectGrantIsNotNullOrderByTimestampDesc(Instant.now().minus(numberPastDays, ChronoUnit.DAYS));
         final Map<String, Series> series = Maps.newHashMap();
         projects.findAllByRestrictedTrue().forEach(p -> series
-                .put(p.getSlug(), new Series(p.getMetadata().getName(), "line", "Total", new ArrayList<>())));
+                .put(p.getSlug(), new Series(p.getMetadata().getName(), "bar", "Total", new ArrayList<>())));
         final List<String> xAxisLabels = Lists.newArrayList();
 
         // Mutable data for iteration
@@ -98,12 +98,24 @@ public class ChartService {
 
             // Add the data point
             if (s.data().isEmpty()) {
-                s.data().add(transaction.getAmount().doubleValue());
+                s.data().add(roundCurrency(transaction.getAmount().doubleValue()));
             } else {
-                s.data().set(s.data().size() - 1, s.data.getLast() + transaction.getAmount().doubleValue());
+                s.data().set(s.data().size() - 1, roundCurrency(s.data.getLast() + transaction.getAmount().doubleValue()));
             }
             total = total.add(transaction.getAmount());
         }
+
+        final Series sTotal = new Series("Total", "line", null, new ArrayList<>());
+        series.values().forEach(s -> {
+            for (int i = 0; i < xAxisLabels.size(); i++) {
+                if (sTotal.data().size() > i) {
+                    sTotal.data().set(i, roundCurrency(sTotal.data().get(i) + s.data().get(i)));
+                } else {
+                    sTotal.data().add(roundCurrency(s.data().get(i)));
+                }
+            }
+        });
+        series.put("Total", sTotal);
 
         return new Chart(
                 new Axis("category", xAxisLabels.reversed(), false),
@@ -113,27 +125,27 @@ public class ChartService {
         );
     }
 
+    private static double roundCurrency(double value) {
+        long factor = (long) Math.pow(10, 2);
+        value = value * factor;
+        long tmp = Math.round(value);
+        return (double) tmp / factor;
+    }
+
     @NotNull
-    private static String getLabelFor(final Instant start, final Instant end, long dayGroupings) {
+    private static String getLabelFor(final Instant start, final Instant end, int dayGroupings) {
         final String startDay = DAY_FORMATTER.format(start);
-        final String endDay = DAY_FORMATTER.format(end);
-        if (startDay.equals(endDay)) {
-            return startDay;
-        }
-        if (dayGroupings == 7) {
-            return "WB " + startDay;
-        }
-        if (dayGroupings == 30) {
-            final String month = MONTH_FORMATTER.format(start);
-            if (month.equals("Jan")) {
-                return "Jan " + YEAR_FORMATTER.format(start);
+        return switch (dayGroupings) {
+            case 30 -> {
+                final String month = MONTH_FORMATTER.format(start);
+                if (month.equals("Jan")) {
+                    yield "Jan " + YEAR_FORMATTER.format(start);
+                }
+                yield month;
             }
-            return month;
-        }
-        if (dayGroupings == 365) {
-            return YEAR_FORMATTER.format(start);
-        }
-        return startDay + " – " + endDay;
+            case 365, 366 -> YEAR_FORMATTER.format(start);
+            default -> startDay;
+        };
     }
 
     @Schema(description = "A chart containing axis and data for visualisation")
@@ -148,7 +160,7 @@ public class ChartService {
     }
 
     @Schema(description = "A data point series for a chart")
-    public record Series(String name, String type, String stack, List<Double> data) {
+    public record Series(String name, String type, @Nullable String stack, List<Double> data) {
     }
 
 }
