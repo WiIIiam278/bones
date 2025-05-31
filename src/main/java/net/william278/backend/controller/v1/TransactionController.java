@@ -37,9 +37,8 @@ import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.Transaction;
 import net.william278.backend.database.model.User;
 import net.william278.backend.database.repository.TransactionRepository;
-import net.william278.backend.exception.ErrorResponse;
-import net.william278.backend.exception.NoPermission;
-import net.william278.backend.exception.NotAuthenticated;
+import net.william278.backend.database.repository.UsersRepository;
+import net.william278.backend.exception.*;
 import net.william278.backend.service.PaypalNotificationService;
 import net.william278.backend.service.StripeWebhookService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -50,6 +49,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @Log
@@ -62,13 +63,15 @@ public class TransactionController {
     private final AppConfiguration config;
     private final PaypalNotificationService paypal;
     private final TransactionRepository transactions;
+    private final UsersRepository users;
 
     @Autowired
-    public TransactionController(StripeWebhookService stripe, AppConfiguration config, PaypalNotificationService paypal, TransactionRepository transactions) {
+    public TransactionController(StripeWebhookService stripe, AppConfiguration config, PaypalNotificationService paypal, TransactionRepository transactions, UsersRepository users) {
         this.stripe = stripe;
         this.config = config;
         this.paypal = paypal;
         this.transactions = transactions;
+        this.users = users;
     }
 
     @PostMapping(
@@ -108,6 +111,106 @@ public class TransactionController {
         }
         CompletableFuture.runAsync(() -> stripe.handleWebhook(body));
         return ResponseEntity.ok().build();
+    }
+
+    @Operation(
+            summary = "Update a transaction",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @PutMapping(
+            value = "/v1/transactions/{id}",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user is not an admin.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @CrossOrigin
+    public Transaction update(
+            @AuthenticationPrincipal User principal,
+
+            @PathVariable Integer id,
+
+            @RequestBody Transaction transaction
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        if (!principal.isAdmin()) {
+            throw new NoPermission();
+        }
+        final Optional<Transaction> trans = transactions.findById(id);
+        if (trans.isEmpty()) {
+            throw new TransactionNotFound();
+        }
+        transaction.setId(id);
+        final User grantedTo = transaction.getGrantedTo();
+        if (grantedTo != null && transaction.getProjectGrant() != null) {
+            grantedTo.removePurchases(Set.of(transaction.getProjectGrant().getSlug()));
+            users.save(grantedTo);
+            transaction.setGrantedTo(null);
+        }
+        transactions.save(transaction);
+        return transaction;
+    }
+
+    @Operation(
+            summary = "Link a transaction to a user",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @PostMapping(
+            value = "/v1/transactions/{id}/link",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "The user is not an admin.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @CrossOrigin
+    public Transaction link(
+            @AuthenticationPrincipal User principal,
+
+            @PathVariable Integer id,
+
+            @RequestBody String userId
+    ) {
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+        if (!principal.isAdmin()) {
+            throw new NoPermission();
+        }
+
+        final Optional<Transaction> trans = transactions.findById(id);
+        if (trans.isEmpty()) {
+            throw new TransactionNotFound();
+        }
+
+        final Optional<User> user = users.findById(userId);
+        if (user.isEmpty()) {
+            throw new UserNotFound();
+        }
+        final User linkedTo = user.get();
+        final Transaction transaction = trans.get();
+        if (transaction.getProjectGrant() != null) {
+            linkedTo.addPurchases(Set.of(transaction.getProjectGrant()));
+        }
+        transaction.setGrantedTo(user.get());
+        transactions.save(transaction);
+        users.save(linkedTo);
+        return transaction;
     }
 
     @Operation(

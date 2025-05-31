@@ -162,6 +162,10 @@ public class User implements OAuth2User {
         return this.purchases.addAll(purchases);
     }
 
+    public boolean removePurchases(@NotNull Set<String> purchases) {
+        return this.purchases.removeIf(p -> purchases.contains(p.getSlug()));
+    }
+
     @JsonSerialize
     @JsonAlias("avatar")
     @NotNull
