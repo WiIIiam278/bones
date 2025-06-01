@@ -157,7 +157,7 @@ public class UserController {
 
     @Operation(
             summary = "Get a specific user by their ID with an API key.",
-            security = @SecurityRequirement(name = "OAuth2")
+            security = @SecurityRequirement(name = "APIKey")
     )
     @ApiResponse(
             responseCode = "200",
@@ -182,7 +182,10 @@ public class UserController {
             value = "/v1/users/{userId}/api",
             produces = {MediaType.APPLICATION_JSON_VALUE}
     )
-    @CrossOrigin
+    @CrossOrigin(
+            origins = "*", allowCredentials = "false",
+            allowedHeaders = {"X-Api-Key", "Content-Type", "Accept"}
+    )
     public User getUser(
             @RequestHeader("X-Api-Key") String apiKey,
 
@@ -306,7 +309,7 @@ public class UserController {
 
     @Operation(
             summary = "Get the projects a user has purchased with an API key, as a map of purchases to Discord role IDs.",
-            security = @SecurityRequirement(name = "OAuth2")
+            security = @SecurityRequirement(name = "APIKey")
     )
     @ApiResponse(
             responseCode = "200",
@@ -331,6 +334,10 @@ public class UserController {
             value = "/v1/users/{userId}/purchases/api",
             produces = {MediaType.APPLICATION_JSON_VALUE},
             consumes = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin(
+            origins = "*", allowCredentials = "false",
+            allowedHeaders = {"X-Api-Key", "Content-Type", "Accept"}
     )
     public Map<String, String> getUserPurchases(
             @RequestHeader("X-Api-Key") String apiKey,
@@ -482,7 +489,7 @@ public class UserController {
 
     @Operation(
             summary = "Request an email verification code for a user by ID.",
-            security = @SecurityRequirement(name = "OAuth2")
+            security = @SecurityRequirement(name = "APIKey")
     )
     @ApiResponse(
             responseCode = "200",
@@ -496,7 +503,11 @@ public class UserController {
     @PostMapping(
             value = "/v1/users/{userId}/email/api",
             produces = {MediaType.APPLICATION_JSON_VALUE},
-            consumes = {MediaType.APPLICATION_JSON_VALUE}
+            consumes = {MediaType.TEXT_PLAIN_VALUE}
+    )
+    @CrossOrigin(
+            origins = "*", allowCredentials = "false",
+            allowedHeaders = {"X-Api-Key", "Content-Type", "Accept"}
     )
     public User updateUserEmailApi(
             @RequestHeader("X-Api-Key") String apiKey,
@@ -505,7 +516,6 @@ public class UserController {
             @PathVariable String userId,
 
             @RequestBody
-            @Email
             String email
     ) {
         if (config.getApiSecret() == null) {

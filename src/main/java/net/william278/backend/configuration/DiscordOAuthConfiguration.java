@@ -91,7 +91,11 @@ public class DiscordOAuthConfiguration {
                                     .formatted(Project.PATTERN, Channel.PATTERN),
                             "POST", false
                     ));
-
+                    // Ignore API user endpoints
+                    c.ignoringRequestMatchers(new AntPathRequestMatcher(
+                            "/v1/users/{userId}/email/api",
+                            "POST", false
+                    ));
                 })
                 .cors(c -> {
                     final CorsConfiguration cors = new CorsConfiguration();
