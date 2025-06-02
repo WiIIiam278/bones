@@ -332,8 +332,7 @@ public class UserController {
     )
     @GetMapping(
             value = "/v1/users/{userId}/purchases/api",
-            produces = {MediaType.APPLICATION_JSON_VALUE},
-            consumes = {MediaType.APPLICATION_JSON_VALUE}
+            produces = {MediaType.APPLICATION_JSON_VALUE}
     )
     @CrossOrigin(
             origins = "*", allowCredentials = "false",
