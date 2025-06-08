@@ -38,7 +38,6 @@ import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.*;
 import net.william278.backend.database.repository.*;
 import net.william278.backend.exception.*;
-import net.william278.backend.service.GitHubImportService;
 import net.william278.backend.service.S3Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,9 +55,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.time.Instant;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 @RestController
 @Tags(value = @Tag(name = "Project Versions"))
@@ -72,7 +68,6 @@ public class VersionController {
     private final ProjectRepository projects;
     private final ChannelRepository channels;
     private final VersionRepository versions;
-    private final GitHubImportService githubImporter;
     private final DistributionRepository distributions;
     private final DownloadRepository downloads;
     private final PostRepository posts;
@@ -80,14 +75,12 @@ public class VersionController {
 
     @Autowired
     public VersionController(AppConfiguration config, ProjectRepository projects, ChannelRepository channels,
-                             VersionRepository versions, GitHubImportService gitHubImportService,
-                             DistributionRepository distributions, DownloadRepository downloads, PostRepository posts,
-                             S3Service s3) {
+                             VersionRepository versions, DistributionRepository distributions,
+                             DownloadRepository downloads, PostRepository posts, S3Service s3) {
         this.config = config;
         this.projects = projects;
         this.channels = channels;
         this.versions = versions;
-        this.githubImporter = gitHubImportService;
         this.distributions = distributions;
         this.downloads = downloads;
         this.posts = posts;
@@ -332,57 +325,6 @@ public class VersionController {
     }
 
     @Operation(
-            summary = "Import versions from GitHub to a channel.",
-            security = @SecurityRequirement(name = "OAuth2")
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Import started."
-    )
-    @ApiResponse(
-            responseCode = "401",
-            description = "Not logged in.",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-    )
-    @ApiResponse(
-            responseCode = "403",
-            description = "Not authorized to import versions.",
-            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
-    )
-    @PostMapping(
-            value = "/v1/projects/{projectSlug:" + Project.PATTERN
-                    + "}/channels/{channelName:" + Channel.PATTERN + "}/versions/import/github",
-            produces = {MediaType.APPLICATION_JSON_VALUE},
-            consumes = {MediaType.APPLICATION_JSON_VALUE}
-    )
-    public VersionImportRequest importGitHubVersions(
-            @AuthenticationPrincipal User principal,
-
-            @Parameter(description = "The slug of the project to import versions for.")
-            @Pattern(regexp = Project.PATTERN)
-            @PathVariable String projectSlug,
-
-            @Parameter(description = "The name of the channel to import versions to.")
-            @Pattern(regexp = Channel.PATTERN)
-            @PathVariable String channelName,
-
-            @RequestBody VersionImportRequest request
-    ) {
-        if (principal == null) {
-            throw new NotAuthenticated();
-        }
-        if (!principal.isAdmin()) {
-            throw new NoPermission();
-        }
-        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
-        final Channel channel = channels.findChannelByName(channelName).orElse(new Channel(channelName));
-
-        githubImporter.importGithub(project, request.source(), channel, request.distributionMatchersMap());
-        return request;
-    }
-
-
-    @Operation(
             summary = "Delete a version of a project."
     )
     @ApiResponse(
@@ -503,35 +445,6 @@ public class VersionController {
             posts.save(Post.fromVersion(created));
         }
         return created;
-    }
-
-    @Schema(description = "Request to import versions from GitHub.")
-    public record VersionImportRequest(
-            @Schema(description = "The version source (import from releases or commits).")
-            @NotNull GitHubImportService.VersionSource source,
-
-            @Schema(description = "Matchers to resolve distributions from asset file names.")
-            @NotNull List<DistributionMatcher> distributionMatchers
-    ) {
-
-        @Schema(description = "Matcher to resolve a distribution from an asset file name.")
-        public record DistributionMatcher(
-                @Schema(description = "Regex filter to match distributions from a file name.")
-                @NotNull String match,
-                @Schema(description = "The distribution")
-                @NotNull Distribution distribution
-        ) {
-            public Map.Entry<String, Distribution> distributionMatchers() {
-                return Map.entry(match, distribution);
-            }
-        }
-
-        @NotNull
-        public Map<String, Distribution> distributionMatchersMap() {
-            return distributionMatchers.stream().map(DistributionMatcher::distributionMatchers)
-                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        }
-
     }
 
 }
