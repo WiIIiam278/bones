@@ -308,6 +308,50 @@ public class UserController {
     }
 
     @Operation(
+            summary = "Get the projects the logged in user has purchased, as a map of purchases to Discord role IDs.",
+            security = @SecurityRequirement(name = "OAuth2")
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The user with their updated list of purchased projects."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "The user is not logged in.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @GetMapping(
+            value = "/v1/users/@me/purchases",
+            produces = {MediaType.APPLICATION_JSON_VALUE}
+    )
+    @CrossOrigin(
+            origins = "*", allowCredentials = "false",
+            allowedHeaders = {"X-Api-Key", "Content-Type", "Accept"}
+    )
+    public Map<String, String> getUserPurchases(
+            @AuthenticationPrincipal User principal
+    ) {
+        // Ensure user is logged in
+        if (principal == null) {
+            throw new NotAuthenticated();
+        }
+
+        // Refresh purchases
+        final User user = transactionGrants.applyTransactionGrants(users.findById(principal.getId())
+                .orElseThrow(IllegalStateException::new));
+
+        // Calculate linked roles map
+        final Map<String, String> purchasesToRoles = new HashMap<>();
+        user.getPurchases().forEach(purchase -> projects.findById(purchase).ifPresent(project -> {
+            final String linkedRole = project.getMetadata().getLinkedDiscordRole();
+            if (linkedRole != null) {
+                purchasesToRoles.put(purchase, linkedRole);
+            }
+        }));
+        return purchasesToRoles;
+    }
+
+    @Operation(
             summary = "Get the projects a user has purchased with an API key, as a map of purchases to Discord role IDs.",
             security = @SecurityRequirement(name = "APIKey")
     )
@@ -338,7 +382,7 @@ public class UserController {
             origins = "*", allowCredentials = "false",
             allowedHeaders = {"X-Api-Key", "Content-Type", "Accept"}
     )
-    public Map<String, String> getUserPurchases(
+    public Map<String, String> getUserPurchasesApi(
             @RequestHeader("X-Api-Key") String apiKey,
 
             @Parameter(description = "The ID of the user to get.")
