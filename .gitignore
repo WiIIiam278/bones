@@ -41,6 +41,7 @@ out/
 
 ### Dynamic Conent ###
 downloads/**
+uploads/**
 docs/**
 *.jar
 *.md

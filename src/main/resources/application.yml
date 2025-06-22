@@ -73,6 +73,7 @@ spring:
   # Configure servlet file settings
   servlet:
     multipart:
+      location: ${TEMP_DIR_LOCATION}
       max-file-size: ${MAX_UPLOAD_SIZE}
       max-request-size: ${MAX_UPLOAD_SIZE}
 
