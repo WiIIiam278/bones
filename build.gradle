@@ -52,7 +52,7 @@ dependencies {
     implementation 'com.sendgrid:sendgrid-java:4.10.1'
 
     // Git
-    implementation 'org.eclipse.jgit:org.eclipse.jgit:8.0.0.202610232043-m2'
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:6.10.0.202406032230-r'
 
     // Lombok
     compileOnly 'org.projectlombok:lombok'
