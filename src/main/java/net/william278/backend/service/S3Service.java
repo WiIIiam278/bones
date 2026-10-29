@@ -26,7 +26,6 @@ package net.william278.backend.service;
 
 import io.minio.*;
 import io.minio.errors.*;
-import io.minio.http.Method;
 import lombok.extern.slf4j.Slf4j;
 import net.william278.backend.configuration.AppConfiguration;
 import net.william278.backend.database.model.Asset;
@@ -38,8 +37,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.util.Optional;
 
 @Slf4j
@@ -77,11 +74,9 @@ public class S3Service {
                     .expiry(Integer.parseInt(config.getS3TicketsExpiry()))
                     .bucket(config.getS3TicketsBucket())
                     .object(getTicketObjectName(ticketNumber))
-                    .method(Method.GET)
+                    .method(Http.Method.GET)
                     .build()));
-        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
-                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
-                 ServerException e) {
+        } catch (MinioException e) {
             log.warn("Failed to fetch ticket transcript #{}", ticketNumber, e);
         }
         return Optional.empty();
@@ -98,9 +93,7 @@ public class S3Service {
                     .bucket(config.getS3TicketsBucket())
                     .object(getTicketObjectName(ticketNumber))
                     .build());
-        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
-                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
-                 ServerException e) {
+        } catch (MinioException e) {
             log.warn("Failed to delete ticket transcript #{}", ticketNumber, e);
         }
     }
@@ -113,14 +106,12 @@ public class S3Service {
 
         try {
             client.putObject(PutObjectArgs.builder()
-                    .stream(file.getInputStream(), file.getSize(), -1)
+                    .stream(file.getInputStream(), file.getSize(), (long) -1)
                     .bucket(config.getS3AssetsBucket())
                     .object(asset.getName())
                     .contentType(file.getContentType())
                     .build());
-        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
-                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
-                 ServerException e) {
+        } catch (MinioException | IOException e) {
             log.warn("Failed to create or upload asset '{}'", asset.getName(), e);
         }
     }
@@ -136,9 +127,7 @@ public class S3Service {
                     .object(asset.getName())
                     .bucket(config.getS3AssetsBucket())
                     .build());
-        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
-                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
-                 ServerException e) {
+        } catch (MinioException e) {
             log.warn("Failed to delete asset '{}'", asset.getName(), e);
         }
     }
@@ -152,14 +141,12 @@ public class S3Service {
 
         try {
             client.putObject(PutObjectArgs.builder()
-                    .stream(versionStream, size, -1)
+                    .stream(versionStream, size, (long) -1)
                     .bucket(config.getS3DownloadsBucket())
                     .object(objectName)
                     .contentType(contentType)
                     .build());
-        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
-                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
-                 ServerException e) {
+        } catch (MinioException e) {
             log.warn("Failed to upload version '{}'", objectName, e);
         }
     }
@@ -176,9 +163,7 @@ public class S3Service {
                     .bucket(config.getS3DownloadsBucket())
                     .object(objectName)
                     .build());
-        } catch (ErrorResponseException | InsufficientDataException | InternalException | InvalidKeyException |
-                 InvalidResponseException | IOException | NoSuchAlgorithmException | XmlParserException |
-                 ServerException e) {
+        } catch (MinioException e) {
             log.warn("Failed to download version '{}'", objectName, e);
         }
         return null;
