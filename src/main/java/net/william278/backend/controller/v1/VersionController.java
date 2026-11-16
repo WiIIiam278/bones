@@ -26,6 +26,7 @@ package net.william278.backend.controller.v1;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -55,6 +56,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.InputStream;
 import java.security.MessageDigest;
 import java.time.Instant;
+import java.util.List;
 
 @RestController
 @Tags(value = @Tag(name = "Project Versions"))
@@ -325,6 +327,83 @@ public class VersionController {
     }
 
     @Operation(
+            summary = "Add downloads to an existing version with an API key.",
+            security = {
+                    @SecurityRequirement(name = "APIKey")
+            }
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "The downloads were added successfully."
+    )
+    @ApiResponse(
+            responseCode = "401",
+            description = "No API key provided.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "Invalid API key.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "The project, channel, and/or version was not found.",
+            content = @Content(schema = @Schema(implementation = ErrorResponse.class))
+    )
+    @PutMapping(
+            value = "/v1/projects/{projectSlug:" + Project.PATTERN
+                    + "}/channels/{channelName:" + Channel.PATTERN
+                    + "}/versions/{versionName:" + Version.PATTERN + "}/api",
+            produces = MediaType.APPLICATION_JSON_VALUE,
+            headers = {
+                    "content-type=multipart/mixed", "content-type=multipart/form-data",
+                    "content-type=application/octet-stream", "content-type=application/json"
+            }
+    )
+    @CrossOrigin(
+            origins = "*", allowCredentials = "false",
+            allowedHeaders = {"X-Api-Key", "Content-Type", "Accept"}
+    )
+    public Version putVersionDownloadsApiKey(
+            @RequestHeader("X-Api-Key") String apiKey,
+
+            @Parameter(description = "The slug of the project the version is for.")
+            @Pattern(regexp = Project.PATTERN)
+            @PathVariable String projectSlug,
+
+            @Parameter(description = "The name of the channel the version was released on.")
+            @Pattern(regexp = Channel.PATTERN)
+            @PathVariable String channelName,
+
+            @Parameter(description = "The name of the version to add downloads to.")
+            @Pattern(regexp = Version.PATTERN)
+            @PathVariable String versionName,
+
+            @RequestPart("downloads")
+            @ArraySchema(
+                    arraySchema = @Schema(description = "The downloads to add to the version."),
+                    schema = @Schema(implementation = Download.class)
+            )
+            List<Download> newDownloads,
+
+            @RequestPart("files")
+            @Schema(description = "The files to upload for the downloads.")
+            MultipartFile[] files
+    ) {
+        if (config.getApiSecret() == null) {
+            throw new IllegalStateException("API key is not set on server.");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new NotAuthenticated();
+        }
+        if (!MessageDigest.isEqual(Utf8.encode(config.getApiSecret()), Utf8.encode(apiKey))) {
+            throw new NoPermission();
+        }
+        return addVersionDownloads(projectSlug, channelName, versionName, newDownloads, files);
+    }
+
+    @Operation(
             summary = "Delete a version of a project."
     )
     @ApiResponse(
@@ -445,6 +524,58 @@ public class VersionController {
             posts.save(Post.fromVersion(created));
         }
         return created;
+    }
+
+    @NotNull
+    private Version addVersionDownloads(@NotNull String projectSlug, @NotNull String channelName,
+                                        @NotNull String versionName, @NotNull List<Download> newDownloads,
+                                        @NotNull MultipartFile[] files) {
+        final Project project = projects.findById(projectSlug).orElseThrow(ProjectNotFound::new);
+        final Channel channel = channels.findChannelByName(channelName).orElseThrow(ChannelNotFound::new);
+        final Version version = versions.findByProjectAndChannelAndName(project, channel, versionName)
+                .orElseThrow(VersionNotFound::new);
+
+        // Set dist
+        newDownloads.forEach(d -> d.setDistribution(
+                distributions.findDistributionByNameAndProjectOrderBySortingWeightDesc(d.getDistribution().getName(), project).orElseGet(() -> {
+                    d.getDistribution().setProject(project);
+                    return distributions.save(d.getDistribution());
+                })
+        ));
+
+        // Save and correctly relocate the uploaded files
+        try {
+            for (int i = 0; i < files.length; i++) {
+                final MultipartFile file = files[i];
+                final Download download = newDownloads.get(i);
+                final String objectName = version.getDownloadObjectName(download.getDistribution(), download);
+
+                // Check size
+                long size = file.getSize();
+                if (size <= 0) {
+                    throw new IllegalArgumentException("File size was 0");
+                }
+                download.setFileSize(size);
+
+                // Move file
+                try (InputStream copy = file.getInputStream()) {
+                    s3.uploadVersion(copy, size,
+                            file.getContentType() == null ? DEFAULT_CONTENT_TYPE : file.getContentType(),
+                            objectName);
+                }
+                try (InputStream copy = file.getInputStream()) {
+                    download.setMd5(DigestUtils.md5DigestAsHex(copy));
+                }
+                downloads.save(download);
+            }
+        } catch (Throwable e) {
+            log.warn("Failed to upload files for version {} of project {}", version.getName(), projectSlug, e);
+            throw new UploadFailed();
+        }
+
+        // Add the downloads to the version, save it
+        version.getDownloads().addAll(newDownloads);
+        return versions.save(version);
     }
 
 }
